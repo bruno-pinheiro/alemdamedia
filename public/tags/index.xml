@@ -22,6 +22,15 @@
     </item>
     
     <item>
+      <title>Blogdown</title>
+      <link>/tags/blogdown/</link>
+      <pubDate>Sat, 23 Jun 2018 00:00:00 +0000</pubDate>
+      <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
+      <guid>/tags/blogdown/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Dplyr</title>
       <link>/tags/dplyr/</link>
       <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
@@ -40,6 +49,15 @@
     </item>
     
     <item>
+      <title>Hugo</title>
+      <link>/tags/hugo/</link>
+      <pubDate>Sat, 23 Jun 2018 00:00:00 +0000</pubDate>
+      <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
+      <guid>/tags/hugo/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Legendas</title>
       <link>/tags/legendas/</link>
       <pubDate>Mon, 08 Oct 2018 00:00:00 +0000</pubDate>
@@ -54,6 +72,15 @@
       <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
       <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
       <guid>/tags/manipula%C3%A7%C3%A3o-de-dados/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Rstudio</title>
+      <link>/tags/rstudio/</link>
+      <pubDate>Thu, 24 May 2018 00:00:00 +0000</pubDate>
+      <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
+      <guid>/tags/rstudio/</guid>
       <description></description>
     </item>
     

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Rstudio on Além da Média</title>
+    <link>/tags/rstudio/</link>
+    <description>Recent content in Rstudio on Além da Média</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <managingEditor>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</managingEditor>
+    <webMaster>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</webMaster>
+    <lastBuildDate>Thu, 24 May 2018 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/rstudio/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Como criar um site com (blogdown/RStudio/Hugo) &#43; (GitHub/Netlify)</title>
+      <link>/post/como-criar-site-com-rstudio-blogdown-hugo-github-netlify/</link>
+      <pubDate>Thu, 24 May 2018 00:00:00 +0000</pubDate>
+      <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
+      <guid>/post/como-criar-site-com-rstudio-blogdown-hugo-github-netlify/</guid>
+      <description>Criação do projeto por meio do blogdown O blogdown é um pacote criado por Yuhui Xie que amplia as já existentes funcionalidades de construção de sites que o R e o RStudio disponibilizam. O pacote internaliza toda a criação de sites com o framework Hugo, um gerador de sites estáticos em código aberto bastante popular e eficiente.
+A criação do site em si é bastante simples. Se for um site com layout básico, sem personalizações, realmente pode ser realizado em cerca de 10 minutos.</description>
+    </item>
+    
+  </channel>
+</rss>

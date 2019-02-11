@@ -33,6 +33,26 @@ Muitas vezes, por exemplo, é necessário manipular os símbolos das legendas do
     </item>
     
     <item>
+      <title>Configurações globais do blogodown</title>
+      <link>/post/2018-06-23-configuracoes-globais-do-blogdown/</link>
+      <pubDate>Sat, 23 Jun 2018 00:00:00 +0000</pubDate>
+      <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
+      <guid>/post/2018-06-23-configuracoes-globais-do-blogdown/</guid>
+      <description>Opções globais Na publicação de conteúdos em um blog algumas informações são metadados que vão se repetir na maioria das postagens. São dados como nome do autor, a extensão do arquivo ou o diretório onde o material será arquivado, entre outros.
+Para evitar ter de preencher estas informações em cada publicação e facilitar o trabalho, é possível padronizar estes metadados no .RProfile, que pode ser tanto o global como local.</description>
+    </item>
+    
+    <item>
+      <title>Como criar um site com (blogdown/RStudio/Hugo) &#43; (GitHub/Netlify)</title>
+      <link>/post/como-criar-site-com-rstudio-blogdown-hugo-github-netlify/</link>
+      <pubDate>Thu, 24 May 2018 00:00:00 +0000</pubDate>
+      <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
+      <guid>/post/como-criar-site-com-rstudio-blogdown-hugo-github-netlify/</guid>
+      <description>Criação do projeto por meio do blogdown O blogdown é um pacote criado por Yuhui Xie que amplia as já existentes funcionalidades de construção de sites que o R e o RStudio disponibilizam. O pacote internaliza toda a criação de sites com o framework Hugo, um gerador de sites estáticos em código aberto bastante popular e eficiente.
+A criação do site em si é bastante simples. Se for um site com layout básico, sem personalizações, realmente pode ser realizado em cerca de 10 minutos.</description>
+    </item>
+    
+    <item>
       <title>About me</title>
       <link>/page/about/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

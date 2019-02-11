@@ -32,5 +32,15 @@ Imagine, por exemplo, que nos últimos seis meses observou-se aumento médio do 
 Muitas vezes, por exemplo, é necessário manipular os símbolos das legendas dos gráficos para garantir maior qualidade e objetividade visual.</description>
     </item>
     
+    <item>
+      <title>Como criar um site com (blogdown/RStudio/Hugo) &#43; (GitHub/Netlify)</title>
+      <link>/post/como-criar-site-com-rstudio-blogdown-hugo-github-netlify/</link>
+      <pubDate>Thu, 24 May 2018 00:00:00 +0000</pubDate>
+      <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
+      <guid>/post/como-criar-site-com-rstudio-blogdown-hugo-github-netlify/</guid>
+      <description>Criação do projeto por meio do blogdown O blogdown é um pacote criado por Yuhui Xie que amplia as já existentes funcionalidades de construção de sites que o R e o RStudio disponibilizam. O pacote internaliza toda a criação de sites com o framework Hugo, um gerador de sites estáticos em código aberto bastante popular e eficiente.
+A criação do site em si é bastante simples. Se for um site com layout básico, sem personalizações, realmente pode ser realizado em cerca de 10 minutos.</description>
+    </item>
+    
   </channel>
 </rss>

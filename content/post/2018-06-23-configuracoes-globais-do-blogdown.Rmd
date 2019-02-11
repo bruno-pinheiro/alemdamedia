@@ -1,0 +1,31 @@
+---
+title: Configurações globais do blogodown
+author: Bruno Pinheiro
+date: '2018-06-23'
+categories:
+  - Configurações
+tags:
+  - blogdown
+  - Hugo
+---
+
+## Opções globais
+
+Na publicação de conteúdos em um blog algumas informações são metadados que vão se repetir na maioria das postagens. São dados como nome do autor, a extensão do arquivo ou o diretório onde o material será arquivado, [entre outros](https://bookdown.org/yihui/blogdown/global-options.html).
+
+Para evitar ter de preencher estas informações em cada publicação e facilitar o trabalho, é possível padronizar estes metadados no `.RProfile`, que pode ser tanto o global como local.
+
+A diferença é que quando realiza a configuração global, ela valerá para qualquer conteúdo RMarkdown que você crie no RStudio. As configurações locais compreendem apenas o projeto em questão. 
+
+```{r, eval=FALSE}
+file.edit("~/.Rprofile") ## para configuração global
+file.edit('.Rprofile') ## para configuração local
+```
+
+O código abaixo, por exemplo, configura extensão padrão dos arquivos e o nome do autor.
+
+```{r, eval = FALSE}
+options(blogdown.ext = ".Rmd", blogdown.author = "Bruno Pinheiro")
+```
+
+Com isto toda vez que eu utilizar o *addin* `New Post` estas informações já estarão automaticamente preenchidas nos seus devidos campos.

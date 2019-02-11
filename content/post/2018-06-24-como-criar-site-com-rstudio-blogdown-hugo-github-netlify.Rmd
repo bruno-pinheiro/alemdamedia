@@ -1,0 +1,121 @@
+---
+title: Como criar um site com (blogdown/RStudio/Hugo) + (GitHub/Netlify)
+author: Bruno Pinheiro
+date: '2018-05-24'
+slug: como-criar-site-com-rstudio-blogdown-hugo-github-netlify
+categories:
+  - Tutoriais
+tags:
+  - RStudio
+  - Hugo
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, error = FALSE)
+```
+
+## Criação do projeto por meio do blogdown
+
+O `blogdown` é um pacote criado por [Yuhui Xie](https://yihui.name/en/) que amplia as já existentes funcionalidades de construção de sites que o R e o RStudio disponibilizam. O pacote internaliza toda a criação de sites com o framework [Hugo](https://gohugo.io/), um gerador de sites estáticos em código aberto bastante popular e eficiente.
+
+A criação do site em si é bastante simples. Se for um site com layout básico, sem personalizações, realmente pode ser realizado em cerca de 10 minutos. Basta proceder com as etapas descritas a seguir.
+
+### Instalar o blogdown e o Hugo
+
+O `blogdown` está disponível no CRAN, então pode ser instalado normalmente.
+
+```{r, eval=FALSE}
+install.packages("blogdown")
+```
+
+E depois é preciso instalar o Hugo, o que pode ser feito diretamente pelo `blogdown`. 
+
+```{r, eval = FALSE}
+blogdown::install_hugo()
+```
+
+A função `install_hugo()` instala o Hugo automaticamente em Linux, Windows e OSX.
+
+### Criar o site
+
+A criação do site é muito simples. Pode ser feita diretamente por meio do menu `File > New Project`, escolhendo a opção "Website project with Hugo". Também pode ser feito manualmente, mas fiz diretamente pelo menu.
+
+Após criar o projeto o RStudio iniciará uma sessão no diretório onde o projeto foi criado e haverá uma série de arquivos.
+
+### Configurações básicas
+
+As configurações básicas são feitas no arquivo `config.toml`, que está localizado no diretório raiz do projeto.
+
+```
+baseurl = ""
+languageCode = ""
+title = ""
+
+[[menu.main]]
+    name = "Sobre"
+    url = "/sobre/"
+[[menu.main]]
+    name = "GitHub"
+    url = "https://github.com/user/project"
+[[menu.main]]
+    name = "Twitter"
+    url = "https://twitter.com/user"
+
+[params]
+   description = ""
+```
+
+Além disso, para facilitar é recomendado incluir algumas configurações globais, que eliminam a necessidade de preencher informações que serão usadas na maioria das vezes. Isto pode ser feito tanto no nível das configurações globais do RStudio como das configurações apenas do projeto. Isto é feito com a inclusão de algumas definições no arquivo `.Rprofile`
+
+```{r, eval = FALSE}
+# file.edit("~/.Rprofile") ## para configuração global
+file.edit('.Rprofile') ## para configuração local
+```
+
+Inicialmente vou configurar apenas a extensão padrão dos arquivos e o nome do autor, que se faz da seguinte forma:
+
+```{r, eval = FALSE}
+options(blogdown.ext = ".Rmd",
+        blogdown.author = "Bruno Pinheiro")
+```
+
+Com isto toda vez que eu utilizar o addin New Post estas informações já estarão automaticamente preenchidas nos seus devidos campos.
+
+### Deploy
+
+Renderizar o site é extremamente simples.
+
+```{r, eval = FALSE}
+blogdown::serve_site()
+```
+
+Esta função realiza todo o trabalho duro de geração do HTML, conforme é possível ver. Todo o conteúdo será gerado a partir de arquivos de texto plano em rmarkdown e guardado no diretório `\content`. E será automaticamente renderizado e incluído no site.
+
+## Configuração do git
+
+Para publicar o site os arquivos precisam estar disponibilizados na nuvem. O GitHub é uma solução extremamente robusta para o versionamento de arquivos, especialmente códigos. Neste caso o projeto é sincronizado com um repositório do GitHub.
+
+### Criação do repositório no GitHub 
+
+Deve ser criado com o mesmo nome do projeto
+
+### Iniciar o repositório local do git
+
+Já estando no terminal e no diretório do projeto:
+
+```
+$ git init
+$ git clone https://github.com/bruno-pinheiro/dadospp.git
+$ git commit -A
+$ git push -u origin master
+```
+
+Estas quatro linhas farão todo o trabalho de conectar o repositório local com a nuvem e subir os arquivos para o GitHub. O git também pode ser inicializado pelo RStudio, mas assim é mais fácil.
+
+## Publicar na web
+
+que também pode ser utilizado para servir o site. Mas seguindo a recomendação do próprio criador do pacote `blogdown`, para isso utilizaremos o serviço [Netlify](https://netlify.com).
+
+* Servir o site no Netlify
+* Conectar repositório
+* Servir site
