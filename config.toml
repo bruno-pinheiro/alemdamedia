@@ -1,5 +1,5 @@
 baseurl = "https://alemdamedia.netlify.com"
-DefaultContentLanguage = "pt-br"
+DefaultContentLanguage = "en"
 
 title = "Além da Média"
 theme = "beautifulhugo"

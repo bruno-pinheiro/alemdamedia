@@ -3,96 +3,96 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://alemdamedia.netlify.com/2018/10/25/como-identificar-raios-de-influ%C3%AAncia-de-cidades-no-r/</loc>
+    <loc>/2018/10/25/como-identificar-raios-de-influ%C3%AAncia-de-cidades-no-r/</loc>
     <lastmod>2018-10-25T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://alemdamedia.netlify.com/2018/10/08/manipulando-os-s%C3%ADmbolos-na-legenda-do-ggplot2/</loc>
+    <loc>/2018/10/08/manipulando-os-s%C3%ADmbolos-na-legenda-do-ggplot2/</loc>
     <lastmod>2018-10-08T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://alemdamedia.netlify.com/</loc>
+    <loc>/</loc>
     <lastmod>2018-10-25T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://alemdamedia.netlify.com/page/about/</loc>
+    <loc>/page/about/</loc>
   </url>
   
   <url>
-    <loc>https://alemdamedia.netlify.com/tags/an%C3%A1lise-espacial/</loc>
-    <lastmod>2018-10-25T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://alemdamedia.netlify.com/categories/</loc>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://alemdamedia.netlify.com/tags/dplyr/</loc>
+    <loc>/tags/an%C3%A1lise-espacial/</loc>
     <lastmod>2018-10-25T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://alemdamedia.netlify.com/tags/ggplot2/</loc>
+    <loc>/categories/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/dplyr/</loc>
     <lastmod>2018-10-25T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://alemdamedia.netlify.com/tags/legendas/</loc>
-    <lastmod>2018-10-08T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://alemdamedia.netlify.com/tags/manipula%C3%A7%C3%A3o-de-dados/</loc>
+    <loc>/tags/ggplot2/</loc>
     <lastmod>2018-10-25T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://alemdamedia.netlify.com/page/</loc>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://alemdamedia.netlify.com/post/</loc>
-    <lastmod>2018-10-25T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://alemdamedia.netlify.com/tags/sf/</loc>
-    <lastmod>2018-10-25T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://alemdamedia.netlify.com/tags/s%C3%ADmbolos/</loc>
+    <loc>/tags/legendas/</loc>
     <lastmod>2018-10-08T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://alemdamedia.netlify.com/tags/</loc>
+    <loc>/tags/manipula%C3%A7%C3%A3o-de-dados/</loc>
     <lastmod>2018-10-25T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://alemdamedia.netlify.com/tags/tidyr/</loc>
+    <loc>/page/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/post/</loc>
     <lastmod>2018-10-25T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://alemdamedia.netlify.com/categories/tutoriais/</loc>
+    <loc>/tags/sf/</loc>
+    <lastmod>2018-10-25T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/s%C3%ADmbolos/</loc>
+    <lastmod>2018-10-08T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/</loc>
+    <lastmod>2018-10-25T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/tidyr/</loc>
+    <lastmod>2018-10-25T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/categories/tutoriais/</loc>
     <lastmod>2018-10-25T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>

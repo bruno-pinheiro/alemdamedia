@@ -2,85 +2,85 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on Além da Média</title>
-    <link>https://alemdamedia.netlify.com/tags/</link>
+    <link>/tags/</link>
     <description>Recent content in Tags on Além da Média</description>
     <generator>Hugo -- gohugo.io</generator>
     <managingEditor>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</managingEditor>
     <webMaster>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</webMaster>
     <lastBuildDate>Thu, 25 Oct 2018 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="https://alemdamedia.netlify.com/tags/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="/tags/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Análise Espacial</title>
-      <link>https://alemdamedia.netlify.com/tags/an%C3%A1lise-espacial/</link>
+      <link>/tags/an%C3%A1lise-espacial/</link>
       <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
       <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
-      <guid>https://alemdamedia.netlify.com/tags/an%C3%A1lise-espacial/</guid>
+      <guid>/tags/an%C3%A1lise-espacial/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Dplyr</title>
-      <link>https://alemdamedia.netlify.com/tags/dplyr/</link>
+      <link>/tags/dplyr/</link>
       <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
       <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
-      <guid>https://alemdamedia.netlify.com/tags/dplyr/</guid>
+      <guid>/tags/dplyr/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Ggplot2</title>
-      <link>https://alemdamedia.netlify.com/tags/ggplot2/</link>
+      <link>/tags/ggplot2/</link>
       <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
       <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
-      <guid>https://alemdamedia.netlify.com/tags/ggplot2/</guid>
+      <guid>/tags/ggplot2/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Legendas</title>
-      <link>https://alemdamedia.netlify.com/tags/legendas/</link>
+      <link>/tags/legendas/</link>
       <pubDate>Mon, 08 Oct 2018 00:00:00 +0000</pubDate>
       <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
-      <guid>https://alemdamedia.netlify.com/tags/legendas/</guid>
+      <guid>/tags/legendas/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Manipulação De Dados</title>
-      <link>https://alemdamedia.netlify.com/tags/manipula%C3%A7%C3%A3o-de-dados/</link>
+      <link>/tags/manipula%C3%A7%C3%A3o-de-dados/</link>
       <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
       <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
-      <guid>https://alemdamedia.netlify.com/tags/manipula%C3%A7%C3%A3o-de-dados/</guid>
+      <guid>/tags/manipula%C3%A7%C3%A3o-de-dados/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Sf</title>
-      <link>https://alemdamedia.netlify.com/tags/sf/</link>
+      <link>/tags/sf/</link>
       <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
       <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
-      <guid>https://alemdamedia.netlify.com/tags/sf/</guid>
+      <guid>/tags/sf/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Símbolos</title>
-      <link>https://alemdamedia.netlify.com/tags/s%C3%ADmbolos/</link>
+      <link>/tags/s%C3%ADmbolos/</link>
       <pubDate>Mon, 08 Oct 2018 00:00:00 +0000</pubDate>
       <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
-      <guid>https://alemdamedia.netlify.com/tags/s%C3%ADmbolos/</guid>
+      <guid>/tags/s%C3%ADmbolos/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Tidyr</title>
-      <link>https://alemdamedia.netlify.com/tags/tidyr/</link>
+      <link>/tags/tidyr/</link>
       <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
       <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
-      <guid>https://alemdamedia.netlify.com/tags/tidyr/</guid>
+      <guid>/tags/tidyr/</guid>
       <description></description>
     </item>
     

@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Categories on Além da Média</title>
-    <link>https://alemdamedia.netlify.com/categories/</link>
+    <link>/categories/</link>
     <description>Recent content in Categories on Além da Média</description>
     <generator>Hugo -- gohugo.io</generator>
     <managingEditor>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</managingEditor>
     <webMaster>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</webMaster>
     
-	<atom:link href="https://alemdamedia.netlify.com/categories/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="/categories/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Tutoriais</title>
-      <link>https://alemdamedia.netlify.com/categories/tutoriais/</link>
+      <link>/categories/tutoriais/</link>
       <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
       <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
-      <guid>https://alemdamedia.netlify.com/categories/tutoriais/</guid>
+      <guid>/categories/tutoriais/</guid>
       <description></description>
     </item>
     
