@@ -1,5 +1,5 @@
 baseurl = "https://alemdamedia.netlify.com"
-DefaultContentLanguage = "en"
+DefaultContentLanguage = "pt-br"
 
 title = "Além da Média"
 theme = "beautifulhugo"
@@ -13,9 +13,6 @@ pygmentsCodefencesGuessSyntax = true
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 disqusShortname = "alemdamedia"
 googleAnalytics = "UA-134237576-1"
-
-[permalinks]
-post = "/:year/:month/:day/:title/"
 
 [Params]
 #  homeTitle = "Além da média" # Set a different text for the header on the home page

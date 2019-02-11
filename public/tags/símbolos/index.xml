@@ -14,10 +14,10 @@
     
     <item>
       <title>Manipulando os símbolos na legenda do ggplot2</title>
-      <link>/2018/10/08/manipulando-os-s%C3%ADmbolos-na-legenda-do-ggplot2/</link>
+      <link>/post/manipulando-os-simbolos-na-legenda-do-ggplot2/</link>
       <pubDate>Mon, 08 Oct 2018 00:00:00 +0000</pubDate>
       <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
-      <guid>/2018/10/08/manipulando-os-s%C3%ADmbolos-na-legenda-do-ggplot2/</guid>
+      <guid>/post/manipulando-os-simbolos-na-legenda-do-ggplot2/</guid>
       <description>O pacote ggplot2 é provavelmente o mais utilizado para visualização de dados no R. É um pacote muito robusto e com inúmeras possibilidades tanto gráficas como estéticas. Por meio de suas funções é possível plotar dados de forma muito simples. Algumas vezes, no entando, as definições padrões do ggplot não atendem necessidades específicas e então, no meio de tantas opções, as coisas podem ficar um tanto confusas.
 Muitas vezes, por exemplo, é necessário manipular os símbolos das legendas dos gráficos para garantir maior qualidade e objetividade visual.</description>
     </item>

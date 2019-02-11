@@ -14,10 +14,10 @@
     
     <item>
       <title>Como identificar raios de influência de cidades no R</title>
-      <link>/2018/10/25/como-identificar-raios-de-influ%C3%AAncia-de-cidades-no-r/</link>
+      <link>/post/como-identificar-raios-de-influencia-de-cidades/</link>
       <pubDate>Thu, 25 Oct 2018 00:00:00 +0000</pubDate>
       <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
-      <guid>/2018/10/25/como-identificar-raios-de-influ%C3%AAncia-de-cidades-no-r/</guid>
+      <guid>/post/como-identificar-raios-de-influencia-de-cidades/</guid>
       <description>Entender o impacto regional de determinadas políticas públicas, de iniciativas privadas, de mudanças em indicadores de todo ordem, é determinante para a tomada de decisões adequadas no campo da gestão pública. Nestes contextos a manipulação de dados espaciais é uma ferramenta fundamental.
 Imagine, por exemplo, que nos últimos seis meses observou-se aumento médio do uso da capacidade instalada da indústria do município de Piracicaba. Sabendo disso, queremos investigar o impacto regional deste crescimento no que diz respeito à absorção de mão de obra em termos regionais.</description>
     </item>
