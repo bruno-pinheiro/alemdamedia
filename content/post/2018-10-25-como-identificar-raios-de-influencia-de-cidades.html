@@ -1,0 +1,313 @@
+---
+title: "Como identificar raios de influência de cidades no R"
+author: "Bruno Pinheiro"
+date: '2018-10-25'
+slug: como-identificar-raios-de-influencia-de-cidades
+categories:
+  - Tutoriais
+tags:
+  - análise espacial
+  - manipulação de dados
+  - ggplot2
+  - dplyr
+  - sf
+  - tidyr
+subtitle: ''
+---
+
+
+
+<p>Entender o impacto regional de determinadas políticas públicas, de iniciativas privadas, de mudanças em indicadores de todo ordem, é determinante para a tomada de decisões adequadas no campo da gestão pública. Nestes contextos a manipulação de dados espaciais é uma ferramenta fundamental.</p>
+<p>Imagine, por exemplo, que nos últimos seis meses observou-se aumento médio do uso da capacidade instalada da indústria do município de Piracicaba. Sabendo disso, queremos investigar o impacto regional deste crescimento no que diz respeito à absorção de mão de obra em termos regionais. A ideia seria analisar como a distância afeta a absorção de mão de obra e por isso vamos desagregar os resultados em de raios de 20km, 50km e 100km.</p>
+<p>Neste caso é preciso identificar as cidades localizadas dentro destes raios. Este tutorial ensina a manipular dados espaciais no R com a finalidade de realizar tal tarefa.</p>
+<div id="problema" class="section level1">
+<h1>Problema</h1>
+<p>Dada a escolha de uma cidade determinada, precisamos identificar quais são os municípos vizinhos sob seu raio de influência.</p>
+</div>
+<div id="preparar-ambiente" class="section level1">
+<h1>Preparar ambiente</h1>
+<p>Realizaremos a análise calculando os raios de duas formas diferentes. A primeira delas considerará os raios a partir das bordas do município de Piracicaba. A segunda considerará os raios a partir de um ponto específico da cidade, no caso o centroide, que representa o ponto central do território.</p>
+<div id="pacotes-utilizados" class="section level2">
+<h2>Pacotes utilizados</h2>
+<p>O procedimento que realizaremos para solucionar o problema depende do uso de alguns pacotes do R, sendo:</p>
+<ul>
+<li><p><code>sf</code>: estabelece classes e estruturas de dados espaciais, além de funções de manipulação. É uma forma aplicação da linguagem espacial no R que vem ganhando popularidade nos últimos anos, entre outras coisas, por incorporar a análise espacial na estrutura de sintaxe derivada do <code>tidyverse</code>.</p></li>
+<li><p><code>dplyr</code>: é um dos principais pacotes do <code>tidyverse</code> e um dos principais pacotes de manipulação de dados no R. Pode ser usado com dados espaciais de classe <code>sf</code> pois esta estrutura de dados é idêntica a um <code>data.frame</code>, diferentemente das classes de dados espaciais mais tradicional, derivadas do pacote <code>sp</code>.</p></li>
+<li><p><code>ggplot2</code>: também é um pacote do <code>tidyverse</code> para visualização de dados. É um dos mais usados e integra com o pacote <code>sf</code>.</p></li>
+</ul>
+</div>
+<div id="importar-e-preparar-os-dados" class="section level2">
+<h2>Importar e preparar os dados</h2>
+<p>Para exemplificar, utilizaremos base de dados de municípos do estado de São Paulo do IBGE de 2017, a mais atual. Ela pode ser baixada diretamente do GeoFTP do IBGE.</p>
+<pre class="r"><code># Baixar malha de municípios do estado de São Paulo
+if (!file.exists(paste0(&quot;data/sp_municipios_2017&quot;))){
+  url_base &lt;- &quot;http://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2017/UFs/SP/&quot;
+  arquivo &lt;- &quot;sp_municipios.zip&quot;
+  tmp &lt;- tempfile(fileext = &quot;.zip&quot;)
+  download.file(paste0(url_base, arquivo), tmp)
+  unzip(tmp, exdir = &quot;data/sp_municipios_2017&quot;)
+  unlink(tmp)
+}</code></pre>
+<p>O código acima procura pela existência de um diretório chamado <code>data/sp_municipios_2017</code>. Se não existe, baixa o arquivo <code>.zip</code> do site do IBGE, o descompactado e depois armazena no diretório criado. O conjunto de arquivos descomptados são dados espaciais no formato shape <code>(.shp)</code>.</p>
+<p>Agora já é possível importar os dados no R, mas antes é preciso carregar os pacotes.</p>
+<pre class="r"><code># carregar pacotes
+library(dplyr)
+library(sf)
+library(ggplot2)</code></pre>
+<p>A função <code>sf:read_sf()</code> nos permite importar os dados de arquivos shape (<code>.shp</code>).</p>
+<pre class="r"><code># importar dados
+munic &lt;- read_sf(dsn = &quot;data/sp_municipios_2017&quot;,
+                         layer = &quot;35MUE250GC_SIR&quot;,
+                         stringsAsFactors = FALSE)</code></pre>
+<p>Os dados foram importados e atribuídos a um objeto que chamamos <code>munic</code>. Agora já podemos checar os dados.</p>
+<pre class="r"><code>dim(munic)</code></pre>
+<pre><code>## [1] 645   3</code></pre>
+<pre class="r"><code>head(munic)</code></pre>
+<pre><code>## Simple feature collection with 6 features and 2 fields
+## geometry type:  MULTIPOLYGON
+## dimension:      XY
+## bbox:           xmin: -51.17924 ymin: -23.03648 xmax: -46.54881 ymax: -21.19701
+## epsg (SRID):    NA
+## proj4string:    +proj=longlat +ellps=GRS80 +no_defs
+## # A tibble: 6 x 3
+##   NM_MUNICIP       CD_GEOCMU                                       geometry
+##   &lt;chr&gt;            &lt;chr&gt;                                 &lt;MULTIPOLYGON [°]&gt;
+## 1 ADAMANTINA       3500105   (((-51.05425 -21.40465, -51.053 -21.40486, -5…
+## 2 ADOLFO           3500204   (((-49.65795 -21.20333, -49.65645 -21.20549, …
+## 3 AGUAÍ            3500303   (((-46.9764 -21.96818, -46.97599 -21.96832, -…
+## 4 ÁGUAS DA PRATA   3500402   (((-46.73501 -21.81891, -46.73431 -21.81904, …
+## 5 ÁGUAS DE LINDÓIA 3500501   (((-46.60614 -22.44173, -46.60347 -22.44307, …
+## 6 ÁGUAS DE SANTA … 3500550   (((-49.19076 -22.72584, -49.19027 -22.72589, …</code></pre>
+<p>O dataset tem 645 linhas, sendo cada uma correspondente a um município do estado de São Paulo, e 2 variáveis tabulares e uma coluna com as coordenadas espaciais. <code>NM_MUNICIP</code> guarda o nome das cidades e <code>CD_GEOCMU</code> o código de identificação do município. A outra columa, <code>geometry</code>, guarda as coordenadas dos polígonos de cada cidade.</p>
+<p>Podemos ver que a coordenada de referência dos dados está em <code>+proj=longlat +ellps=GRS80 +no_defs</code>, com as coordenadas em latitude e logitude. As funções de manipulação geométrica do <code>sf</code> assumem uma projeção diferente, baseada em DATUM</p>
+</div>
+</div>
+<div id="metodo-1-raios-a-partir-das-bordas-da-cidade" class="section level1">
+<h1>Método 1: raios a partir das bordas da cidade</h1>
+<div id="etapas-de-manipulacao" class="section level2">
+<h2>Etapas de manipulação</h2>
+<p>A manipulação dos dados, efetivamente, envolve as seguintes etapas:</p>
+<ol style="list-style-type: decimal">
+<li>Criação dos raios de 10km, 50km e 100km a partir dos centroides</li>
+<li>Identificação das cidades cujo território faz intersecção com cada um dos raios</li>
+<li>Criação de variáveis binárias identificando quais cidades estão nos raios de cada uma das seis cidades (1 = a cidade está no raio, 0 = a cidade não está no raio)</li>
+<li>Mescla das variáveis binárias na base de dados do excel</li>
+</ol>
+</div>
+<div id="criar-os-raios" class="section level2">
+<h2>1. Criar os raios</h2>
+<p>A função <code>sf::st_buffer()</code> é a que usaremos para criar os raios. Ela pode ser aplicada tanto para pontos como para polígonos, e o que faz é criar um novo polígono baseado no argumento de distância indicado na função.</p>
+<pre class="r"><code>raio20_borda &lt;- munic %&gt;% 
+  filter(NM_MUNICIP == &quot;PIRACICABA&quot;) %&gt;% 
+  st_buffer(20000)
+
+raio50_borda &lt;- munic %&gt;% 
+  filter(NM_MUNICIP == &quot;PIRACICABA&quot;) %&gt;% 
+  st_buffer(50000)
+
+raio100_borda &lt;- munic %&gt;% 
+  filter(NM_MUNICIP == &quot;PIRACICABA&quot;) %&gt;% 
+  st_buffer(100000)</code></pre>
+<p>Vamos visualizar os raios:</p>
+<pre class="r"><code>ggplot() +
+  geom_sf(data = munic %&gt;% filter(NM_MUNICIP == &quot;PIRACICABA&quot;)) +
+  geom_sf(data = raio20_borda, alpha = 0, aes(col = &quot;020 km&quot;)) +
+  geom_sf(data = raio50_borda, alpha = 0, aes(col = &quot;050 km&quot;)) +
+  geom_sf(data = raio100_borda, alpha = 0, aes(col = &quot;100 km&quot;))</code></pre>
+<p><img src="/post/2018-10-25-como-identificar-raios-de-influencia-de-cidades_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+</div>
+<div id="identificar-as-cidades-com-intersecao-nos-raios" class="section level2">
+<h2>2. Identificar as cidades com interseção nos raios</h2>
+<p>Queremos saber quais as cidades vizinhas a Piracicaba que estão dentro dos limites dos raios de 20km, 50km e 100km. Isto é uma tarefa de intersecção de geometrias. Assim como a escolha de entre criar os raios a partir das bordas ou dos centroides é uma decisão a ser tomada, dependendo das características da análise a ser realizada, é preciso definir também o critério de intersecção. Ou seja, o que define a intersecção? Podemos considerar o polígono das cidades ou os seus centroides, por exemplo.</p>
+<p>Neste caso, consideraremos sob os raios de influência qualquer cidade com ao menos uma parte do seu território (o polígono do seu território) dentro do raio.</p>
+<p>Para realizar as interseções, usaremos em combinação as funções <code>sf::st_join()</code> e <code>sf::st_intersects</code>.</p>
+<pre class="r"><code># raio de 20km
+cidades_borda20 &lt;- st_join(
+  select(raio20_borda, NM_MUNICIP),
+  select(munic, CD_GEOCMU),
+  join = st_intersects
+  ) %&gt;% 
+  mutate(raioborda20 = 1)
+
+# raio de 50km
+cidades_borda50 &lt;- st_join(
+  select(raio50_borda, NM_MUNICIP),
+  select(munic, CD_GEOCMU ),
+  join = st_intersects
+  ) %&gt;% 
+  mutate(raioborda50 = 1)
+
+# raio de 100km
+cidades_borda100 &lt;- st_join(
+  select(raio100_borda, NM_MUNICIP),
+  select(munic, CD_GEOCMU ),
+  join = st_intersects
+  ) %&gt;% 
+  mutate(raioborda100 = 1)</code></pre>
+<p>Fizemos a seleção das variáveis tabulares no procedimento para evitar redundância no resultado (se quiser entender, retire as seleções, rode o código e veja os resultados). Além disso, criamos uma variável chamada <code>Raio</code>, que identifica com o valor <code>1</code> os municípios extraídos. Esta variável será transformada na variável binária de identificação dos raios, na base <code>munic</code>.</p>
+</div>
+<div id="mescla-na-base-de-municipios-do-estado-de-sao-paulo" class="section level2">
+<h2>3. Mescla na base de municípios do estado de São Paulo</h2>
+<pre class="r"><code>munic &lt;- munic %&gt;%
+  merge(cidades_borda20 %&gt;% as.data.frame %&gt;% select(-NM_MUNICIP, -geometry),
+        by = &quot;CD_GEOCMU&quot;, all.x = TRUE) %&gt;% 
+  merge(cidades_borda50 %&gt;% as.data.frame %&gt;% select(-NM_MUNICIP, -geometry),
+        by = &quot;CD_GEOCMU&quot;, all.x = TRUE) %&gt;% 
+  merge(cidades_borda100 %&gt;% as.data.frame %&gt;% select(-NM_MUNICIP, -geometry),
+        by = &quot;CD_GEOCMU&quot;, all.x = TRUE) %&gt;% 
+  mutate(raioborda20 = recode(raioborda20, .missing = 0),
+         raioborda50 = recode(raioborda50, .missing = 0),
+         raioborda100 = recode(raioborda100, .missing = 0))</code></pre>
+<p>Vamos ver agora os resultados:</p>
+<pre class="r"><code>head(munic %&gt;% data.frame)</code></pre>
+<pre><code>##   CD_GEOCMU             NM_MUNICIP raioborda20 raioborda50 raioborda100
+## 1   3500105             ADAMANTINA           1           1            1
+## 2   3500204                 ADOLFO           1           1            1
+## 3   3500303                  AGUAÍ           1           1            1
+## 4   3500402         ÁGUAS DA PRATA           1           1            1
+## 5   3500501       ÁGUAS DE LINDÓIA           1           1            1
+## 6   3500550 ÁGUAS DE SANTA BÁRBARA           1           1            1
+##                         geometry
+## 1 MULTIPOLYGON (((-51.05425 -...
+## 2 MULTIPOLYGON (((-49.65795 -...
+## 3 MULTIPOLYGON (((-46.9764 -2...
+## 4 MULTIPOLYGON (((-46.73501 -...
+## 5 MULTIPOLYGON (((-46.60614 -...
+## 6 MULTIPOLYGON (((-49.19076 -...</code></pre>
+<p>Temos então as variáveis binárias que identificam com 0 e 1 se a cidade está ou não no respectivo raio.</p>
+</div>
+<div id="visualizar-os-resultados" class="section level2">
+<h2>Visualizar os resultados</h2>
+<p>Vamos visualizar agora o mapa do estado de São Paulo, com os raios de influência da cidade de Piracicaba. Para facilitar, vamos criar uma variável categórica, a partir das binárias, identificando os raios de influência.</p>
+<pre class="r"><code>munic &lt;- munic %&gt;% 
+  mutate(
+    Raio_borda = factor(if_else(NM_MUNICIP == &quot;PIRACICABA&quot;, &quot;Piracicaba&quot;,
+                                if_else(raioborda20 == 1, &quot;20km&quot;,
+                                        if_else(raioborda50 == 1, &quot;50km&quot;,
+                                                if_else(raioborda100 == 1, &quot;100km&quot;, &quot;Fora dos raios&quot;)))),
+                  levels = c(&quot;20km&quot;, &quot;50km&quot;, &quot;100km&quot;, &quot;Fora dos raios&quot;, &quot;Piracicaba&quot;))
+    )</code></pre>
+<p>Agora vamos criar o mapa:</p>
+<pre class="r"><code>p1 &lt;- ggplot(munic) +
+  geom_sf(aes(fill = Raio_borda), lwd = .1) +
+  labs(title = &quot;Raios de influência de Piracicaba&quot;,
+       subtitle = &quot;A partir das bordas&quot;) +
+  asha::theme_map() +
+  theme(legend.position = &quot;bottom&quot;)
+p1</code></pre>
+<p><img src="/post/2018-10-25-como-identificar-raios-de-influencia-de-cidades_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+</div>
+</div>
+<div id="metodo-2-raios-a-partir-das-bordas-da-cidade" class="section level1">
+<h1>Método 2: raios a partir das bordas da cidade</h1>
+<div id="gerar-centroide" class="section level2">
+<h2>1. Gerar centroide</h2>
+<pre class="r"><code>centroide &lt;- munic %&gt;% 
+  filter(NM_MUNICIP == &quot;PIRACICABA&quot;) %&gt;% 
+  st_centroid()</code></pre>
+<pre class="r"><code>raio20_centroide &lt;- centroide %&gt;% 
+  filter(NM_MUNICIP == &quot;PIRACICABA&quot;) %&gt;% 
+  st_buffer(20000)
+
+raio50_centroide &lt;- centroide %&gt;% 
+  filter(NM_MUNICIP == &quot;PIRACICABA&quot;) %&gt;% 
+  st_buffer(50000)
+
+raio100_centroide &lt;- centroide %&gt;% 
+  filter(NM_MUNICIP == &quot;PIRACICABA&quot;) %&gt;% 
+  st_buffer(100000)</code></pre>
+<pre class="r"><code>ggplot() +
+  geom_sf(data = munic %&gt;% filter(NM_MUNICIP == &quot;PIRACICABA&quot;)) +
+  geom_sf(data = centroide, size = 1) +
+  geom_sf(data = raio20_centroide, alpha = 0, aes(col = &quot;020 km&quot;)) +
+  geom_sf(data = raio50_centroide, alpha = 0, aes(col = &quot;050 km&quot;)) +
+  geom_sf(data = raio100_centroide, alpha = 0, aes(col = &quot;100 km&quot;))</code></pre>
+<p><img src="/post/2018-10-25-como-identificar-raios-de-influencia-de-cidades_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+</div>
+<div id="identificar-as-cidades-com-intersecao-nos-raios-1" class="section level2">
+<h2>2. Identificar as cidades com interseção nos raios</h2>
+<pre class="r"><code># raio de 20km
+cidades_centroide20 &lt;- st_join(
+  select(raio20_centroide, NM_MUNICIP),
+  select(munic, CD_GEOCMU),
+  join = st_intersects
+  ) %&gt;% 
+  mutate(raiocentroide20 = 1)
+
+# raio de 50km
+cidades_centroide50 &lt;- st_join(
+  select(raio50_centroide, NM_MUNICIP),
+  select(munic, CD_GEOCMU ),
+  join = st_intersects
+  ) %&gt;% 
+  mutate(raiocentroide50 = 1)
+
+# raio de 100km
+cidades_centroide100 &lt;- st_join(
+  select(raio100_centroide, NM_MUNICIP),
+  select(munic, CD_GEOCMU ),
+  join = st_intersects
+  ) %&gt;% 
+  mutate(raiocentroide100 = 1)</code></pre>
+</div>
+<div id="mescla-na-base-de-municipios-do-estado-de-sao-paulo-1" class="section level2">
+<h2>3. Mescla na base de municípios do estado de São Paulo</h2>
+<pre class="r"><code>munic &lt;- munic %&gt;%
+  merge(cidades_centroide20 %&gt;% as.data.frame %&gt;% select(-NM_MUNICIP, -geometry),
+        by = &quot;CD_GEOCMU&quot;, all.x = TRUE) %&gt;% 
+  merge(cidades_centroide50 %&gt;% as.data.frame %&gt;% select(-NM_MUNICIP, -geometry),
+        by = &quot;CD_GEOCMU&quot;, all.x = TRUE) %&gt;% 
+  merge(cidades_centroide100 %&gt;% as.data.frame %&gt;% select(-NM_MUNICIP, -geometry),
+        by = &quot;CD_GEOCMU&quot;, all.x = TRUE) %&gt;% 
+  mutate(raiocentroide20 = recode(raiocentroide20, .missing = 0),
+         raiocentroide50 = recode(raiocentroide50, .missing = 0),
+         raiocentroide100 = recode(raiocentroide100, .missing = 0))</code></pre>
+<p>Vamos ver agora os resultados:</p>
+<pre class="r"><code>head(munic %&gt;% data.frame)</code></pre>
+<pre><code>##   CD_GEOCMU             NM_MUNICIP raioborda20 raioborda50 raioborda100
+## 1   3500105             ADAMANTINA           1           1            1
+## 2   3500204                 ADOLFO           1           1            1
+## 3   3500303                  AGUAÍ           1           1            1
+## 4   3500402         ÁGUAS DA PRATA           1           1            1
+## 5   3500501       ÁGUAS DE LINDÓIA           1           1            1
+## 6   3500550 ÁGUAS DE SANTA BÁRBARA           1           1            1
+##   Raio_borda raiocentroide20 raiocentroide50 raiocentroide100
+## 1       20km               1               1                1
+## 2       20km               1               1                1
+## 3       20km               1               1                1
+## 4       20km               1               1                1
+## 5       20km               1               1                1
+## 6       20km               1               1                1
+##                         geometry
+## 1 MULTIPOLYGON (((-51.05425 -...
+## 2 MULTIPOLYGON (((-49.65795 -...
+## 3 MULTIPOLYGON (((-46.9764 -2...
+## 4 MULTIPOLYGON (((-46.73501 -...
+## 5 MULTIPOLYGON (((-46.60614 -...
+## 6 MULTIPOLYGON (((-49.19076 -...</code></pre>
+<p>Temos então as variáveis binárias que identificam com 0 e 1 se a cidade está ou não no respectivo raio.</p>
+</div>
+<div id="visualizar-os-resultados-1" class="section level2">
+<h2>Visualizar os resultados</h2>
+<p>Vamos visualizar agora o mapa do estado de São Paulo, com os raios de influência da cidade de Piracicaba. Para facilitar, vamos criar uma variável categórica, a partir das binárias, identificando os raios de influência.</p>
+<pre class="r"><code>munic &lt;- munic %&gt;% 
+  mutate(
+    Raio_centroide = factor(if_else(NM_MUNICIP == &quot;PIRACICABA&quot;, &quot;Piracicaba&quot;,
+                                if_else(raioborda20 == 1, &quot;20km&quot;,
+                                        if_else(raioborda50 == 1, &quot;50km&quot;,
+                                                if_else(raioborda100 == 1, &quot;100km&quot;, &quot;Fora dos raios&quot;)))),
+                  levels = c(&quot;20km&quot;, &quot;50km&quot;, &quot;100km&quot;, &quot;Fora dos raios&quot;, &quot;Piracicaba&quot;))
+    )</code></pre>
+<p>Agora vamos criar o mapa:</p>
+<pre class="r"><code>p2 &lt;- ggplot(munic) +
+  geom_sf(aes(fill = Raio_centroide), lwd = .1) +
+  labs(title = &quot;Raios de influência de Piracicaba&quot;,
+       subtitle = &quot;A partir do centroide&quot;) +
+  asha::theme_map() +
+  theme(legend.position = &quot;bottom&quot;)
+p2</code></pre>
+<p><img src="/post/2018-10-25-como-identificar-raios-de-influencia-de-cidades_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<pre class="r"><code>gridExtra::grid.arrange(p1, p2, ncol = 2)</code></pre>
+<p><img src="/post/2018-10-25-como-identificar-raios-de-influencia-de-cidades_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+</div>
+</div>

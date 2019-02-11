@@ -1,0 +1,73 @@
+baseurl = "https://alemdamedia.netlify.com"
+DefaultContentLanguage = "pt-br"
+
+title = "Além da Média"
+theme = "beautifulhugo"
+metaDataFormat = "yaml"
+pygmentsStyle = "trac"
+pygmentsUseClasses = true
+pygmentsCodeFences = true
+pygmentsCodefencesGuessSyntax = true
+#pygmentsUseClassic = true
+#pygmentOptions = "linenos=inline"
+ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
+disqusShortname = "alemdamedia"
+googleAnalytics = "UA-134237576-1"
+
+[permalinks]
+post = "/:year/:month/:day/:title/"
+
+[Params]
+#  homeTitle = "Além da média" # Set a different text for the header on the home page
+  subtitle = "ciência de dados e humanidades"
+  logo = "img/avatar-icon.png" # Expecting square dimensions
+  favicon = "img/favicon.ico"
+  dateFormat = "02/01/2006"
+  shortdateFormat = "02/Jan/2006 15:04:05"
+  commit = false
+  rss = true
+  comments = true
+  readingTime = true
+  wordCount = true
+  useHLJS = true
+  socialShare = true
+  delayDisqus = true
+  showRelatedPosts = true
+  gcse = "000226989137327763666:kjdmisjkkx8" # Get your code from google.com/cse. Make sure to go to "Look and Feel" and change Layout to "Full Width" and Theme to "Classic"
+
+#[[Params.bigimg]]
+#  src = "img/triangle.jpg"
+#  desc = "Triangle"
+#[[Params.bigimg]]
+#  src = "img/sphere.jpg"
+#  desc = "Sphere"
+#  # position: see values of CSS background-position.
+#  position = "center top"
+#[[Params.bigimg]]
+#  src = "img/hexagon.jpg"
+#  desc = "Hexagon"
+
+[Author]
+  name = "Bruno Pinheiro de Oliveira"
+  website = "alemdamedia.netlify.com"
+  email = "bruno.lahunmen@gmail.com"
+  github = "bruno-pinheiro"
+  gitlab = "bruno-pinheiro"
+  stackoverflow = "users/7636176/bruno-pinheiro"
+
+[[menu.main]]
+    name = "Blog"
+    url = ""
+    weight = 1
+
+[[menu.main]]
+    name = "Tags"
+    url = "tags"
+    weight = 2
+    
+[[menu.main]]
+    name = "Sobre"
+    url = "page/sobre/"
+    weight = 3
+
+

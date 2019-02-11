@@ -1,0 +1,68 @@
+---
+title: Manipulando os símbolos na legenda do ggplot2
+author: Bruno Pinheiro
+date: '2018-10-08'
+slug: manipulando-os-simbolos-na-legenda-do-ggplot2
+categories:
+  - Tutoriais
+tags:
+  - ggplot2
+  - legendas
+  - símbolos
+subtitle: ''
+---
+
+O pacote ggplot2 é provavelmente o mais utilizado para visualização de dados no R. É um pacote muito robusto e com inúmeras possibilidades tanto gráficas como estéticas. Por meio de suas funções é possível plotar dados de forma muito simples. Algumas vezes, no entando, as definições padrões do ggplot não atendem necessidades específicas e então, no meio de tantas opções, as coisas podem ficar um tanto confusas.
+
+Muitas vezes, por exemplo, é necessário manipular os símbolos das legendas dos gráficos para garantir maior qualidade e objetividade visual. Não é algo complicado, mas já gastei um bom tempo pesquisando a respeito até conseguir descobrir uma forma eficiente de fazê-lo (o que só ocorreu realmente porque, para me ajudar, decidi ajudar um camarada no StackOverFlow).
+
+Aqui neste tutorial vou explicar como realizar esta tarefa.
+
+# Criar os dados
+
+Comecemos criando um conjunto de dados que possa expressar o problema.
+
+```{r}
+# criar data.frame
+df <-
+  data.frame(ano = rep(2000:2018, each=2),
+             dolar = sort(rnorm(1:38, 3, .6)),
+             tipo = c("comercial", "turístico"))
+
+str(df)
+```
+
+Nossos dados estão na forma de um data.frame com três colunas e 30 linhas. Digamos que trata-se realmente da evolução anual do preço médio anual do dólar em relação ao real e que queremos plotar um gráfico de série temporal da cotação média do dólar, tipo. E que queremos adicionar também um ponto num local específico do plot, representando o preço máximo do dólar no ano em que a média e o valor máximo ficaram mais distantes. Podemos fazer isso sem dificuldades com o ggplot.
+
+# Criar o gráfico
+
+É preciso carregar o pacote ggplot2.
+
+```{r}
+library(ggplot2)
+```
+
+Agora vamos plotar um gráfico com a série temporal em linha e um ponto correspondente a um valor do ano de 2006.
+
+```{r}
+p1 <- ggplot(df) +
+  geom_line(aes(x = ano, y = dolar, colour = tipo)) +
+  geom_point(aes(x = 2006, y = 3.6, colour = "Valor máximo"))
+
+p1
+```
+
+Já temos um gráfico bastante interessante, porém as legendas não estão adequadamente formatadas, de modo que tanto as linhas estão cortadas por um círculo como o ponto está cortado por uma linha. Queremos adequar os símbolos para que as linhas sejam representadas por linhas e o ponto apenas por um ponto.
+
+## Manipular símbolos da legenda
+
+Para conseguir a manipulação que desejamos, é preciso adicionar algumas especificações utilizando a função guides(), conforme indicado abaixo. Dentro dele indicamos o argumento color, e sobrescrevemos o mapeamento estético dos símbolos dentro de guide_legend(), passando os valores que definem o tipo de ponto pch e de linha linetype dentro de uma lista.
+
+```{r}
+p1 +
+  guides(color = guide_legend(
+    override.aes = list(pch=c(NA, NA, 16), linetype=c(1,1,0))
+    ))
+```
+
+Pronto, agora sim! O resultado é o gráfico que queríamos, com os símbolos da legenda corretamente formatados.

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Legendas on Além da Média</title>
+    <link>https://alemdamedia.netlify.com/tags/legendas/</link>
+    <description>Recent content in Legendas on Além da Média</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <managingEditor>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</managingEditor>
+    <webMaster>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</webMaster>
+    <lastBuildDate>Mon, 08 Oct 2018 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://alemdamedia.netlify.com/tags/legendas/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Manipulando os símbolos na legenda do ggplot2</title>
+      <link>https://alemdamedia.netlify.com/2018/10/08/manipulando-os-s%C3%ADmbolos-na-legenda-do-ggplot2/</link>
+      <pubDate>Mon, 08 Oct 2018 00:00:00 +0000</pubDate>
+      <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
+      <guid>https://alemdamedia.netlify.com/2018/10/08/manipulando-os-s%C3%ADmbolos-na-legenda-do-ggplot2/</guid>
+      <description>O pacote ggplot2 é provavelmente o mais utilizado para visualização de dados no R. É um pacote muito robusto e com inúmeras possibilidades tanto gráficas como estéticas. Por meio de suas funções é possível plotar dados de forma muito simples. Algumas vezes, no entando, as definições padrões do ggplot não atendem necessidades específicas e então, no meio de tantas opções, as coisas podem ficar um tanto confusas.
+Muitas vezes, por exemplo, é necessário manipular os símbolos das legendas dos gráficos para garantir maior qualidade e objetividade visual.</description>
+    </item>
+    
+  </channel>
+</rss>
