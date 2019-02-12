@@ -1,0 +1,350 @@
+---
+title: As veias do Brasil no R
+author: Bruno Pinheiro
+date: '2019-02-11'
+slug: as-veias-do-brasil-no-r.pt-br
+categories:
+  - Tutoriais
+tags:
+  - hidrografia
+subtitle: 'Criando um arco iris de rios de forma programática'
+bigimg: [{src: "/img/mapa_brasil_capa.png", desc: "Veias do Brasil"}]
+---
+
+
+
+<p>Há cerca de dois anos um amigo (o <a href="https://twitter.com/omtuttare">Carlos Diego</a>) me chamou não lembro em qual <em>chat</em> e mostrou o trabalho da geógrafa <a href="https://imgur.com/gallery/N4cUA">Fejetlenfej</a>, que produziu mapas colorindo as bacias hidrográficas dos EUA, criando um efeito belíssimo.</p>
+<p>Antropólogo e mestrando em gestão e regulação de recursos hídricos, ele viu naqueles mapas uma forma de diferente e sensível de explicitar a importância dos rios em nossa relação com o espaço e os territórios. Resolvemos então reproduzir a ideia usando dados da hidrografia brasileira.</p>
+<p>Com um certo trabalho, na época fizemos os mapas no QGIS. Depois o Diego publicou na plataforma <a href="https://aguas.ml/as-veias-do-brasil-arco-iris-das-bacias-hidrograficas-da-ana/">aguas.ml</a> e logo em seguida no <a href="https://www.archdaily.com.br/br/802719/as-veias-do-brasil-arco-iris-das-bacias-hidrograficas-do-territorio-nacional">Archdaily Brasil</a>, onde por muitos dias foi a publicação mais acessada do site.</p>
+<p>Muita gente perguntou como fazê-los, mas a reprodutibilidade não é um forte do QGIS. De lá para cá eu incorporei minhas habilidades em visualização de dados e há um bom tempo eu quero parar e fazer estes mapas no R. Fiz isto alguns dias atrás (há coisas que fazemos por diversão). Agora eu explico neste tutorial como criar este arco-íris das veias brasileiras de forma programática no R, usando dados abertos disponibilizados pela <a href="http://ana.gov.br/">Agência Nacional de Águas (ANA)</a>.</p>
+<div id="obter-os-dados" class="section level2">
+<h2>Obter os dados</h2>
+<p>Para começar é preciso obter os dados. Para a produção dos mapas utilizaremos duas bases de dados em formato <em>shapefile</em>.</p>
+<ul>
+<li><a href="http://metadados.ana.gov.br/geonetwork/srv/pt/metadata.show?id=267&amp;currTab=distribution">Cursos D’Água da Base Hidrográfica Ottocodificada Multiescalas 2013</a></li>
+</ul>
+<p>A primeira delas contem a geolocalização dos cursos d’água do território nacional, representados geometricamente por linhas. Embora já exista a versão de 2017, mais recente, utilizaremos a base de 2013, pelo tamanho do arquivo que precisará ser baixado.</p>
+<ul>
+<li><a href="http://metadados.ana.gov.br/geonetwork/srv/pt/metadata.show?id=92&amp;currTab=distribution">Regiões hidrográficas do Brasil</a></li>
+</ul>
+<p>A segunda base contem a geometria poligonal das regiões hidrográficas brasileiras. A necessidade desta base ficará clara mais abaixo.</p>
+<p>Então vamos baixar os dados:</p>
+<pre class="r"><code># baixar shapefile de cursos d&#39;água
+dir &lt;- &quot;data-raw/geoft_bho&quot;
+url &lt;- &quot;http://metadados.ana.gov.br/geonetwork/srv/pt/http://metadados.ana.gov.br/geonetwork/srv/en/resources.get?id=267&amp;fname=geoft_bho_cursodagua.zip&amp;access=private&quot;
+  
+# Obter os dados
+if (!file.exists(dir)) {
+    tmp &lt;- tempfile(fileext = &quot;.zip&quot;)
+    download.file(url, tmp)
+    unzip(tmp, exdir = dir)
+    unlink(tmp)
+}
+
+dir &lt;- &quot;data-raw/SNIRH_regioes_hidrograficas&quot;
+url &lt;- &quot;http://metadados.ana.gov.br/geonetwork/srv/pt/http://metadados.ana.gov.br/geonetwork/srv/en/resources.get?id=92&amp;fname=SNIRH_RegioesHidrograficas.zip&amp;access=private&quot;
+
+if (!file.exists(dir)) {
+    tmp &lt;- tempfile(fileext = &quot;.zip&quot;)
+    download.file(url, tmp)
+    unzip(tmp, exdir = dir)
+    unlink(tmp)
+}</code></pre>
+<p>O código abaixo realiza o download do arquivo zipado, o descompacta e guarda os arquivos extraídos em um diretório chamado <code>data-raw/geoft_bho</code>, localizado na raiz do seu diretório de trabalho.</p>
+</div>
+<div id="carregar-pacotes-e-importar-dados" class="section level2">
+<h2>Carregar pacotes e importar dados</h2>
+<p>Após baixar os dados já é possível carregar os dados. Mas antes vamos carregar os pacotes que serão utilizados.</p>
+<ul>
+<li><p><code>sf</code>: as operações com os dados espaciais serão feitas com o pacote <code>sf</code>, que implementa o padrão <a href="https://r-spatial.github.io/sf/articles/sf1.html">simple features</a> no R.</p></li>
+<li><p><code>dplyr</code>: manipulação de dados não espaciais</p></li>
+<li><p><code>ggplot2</code>: para a criação dos mapas</p></li>
+<li><p><code>stringr</code>: para construir o título dos gráficos</p></li>
+</ul>
+<p>Caso não tenha estes pacotes instalados, rode as linhas de código a seguir.</p>
+<pre class="r"><code># instalar pacotes
+install.packages(&quot;sf&quot;)
+install.packages(&quot;tidyverse&quot;) # dplyr, ggplot2, stringr e outros</code></pre>
+<p>Se já tem, pode pular o passo acima e seguir adiante:</p>
+<pre class="r"><code># carregar pacotes
+library(sf)
+library(tidyverse) # dplyr, ggplot2, stringr e outros</code></pre>
+<p>Com os pacotes carregados, já podemos importar os dados e proceder com a construção dos mapas.</p>
+<pre class="r"><code># Importar os dados
+cursos &lt;- read_sf(dsn = &quot;data-raw/geoft_bho&quot;, layer = &quot;geoft_bho_cursodagua&quot;)
+regioes &lt;- read_sf(dsn = &quot;data-raw/SNIRH_regioes_hidrograficas&quot;,
+                   layer = &quot;SNIRH_RegioesHidrograficas&quot;)</code></pre>
+<pre class="r"><code>glimpse(cursos)</code></pre>
+<pre><code>## Observations: 310,139
+## Variables: 12
+## $ WTC_PK     &lt;dbl&gt; 108774, 75216, 256913, 256020, 202146, 56949, 231970,…
+## $ IDCDA      &lt;dbl&gt; 108774, 75216, 256913, 256020, 202146, 56949, 231970,…
+## $ COCURSODAG &lt;chr&gt; &quot;895989422&quot;, &quot;4448&quot;, &quot;446&quot;, &quot;4634&quot;, &quot;46362&quot;, &quot;4638258…
+## $ NUDISTBACC &lt;dbl&gt; 3155.822, 2336.459, 1934.275, 2170.950, 2313.479, 275…
+## $ NUCOMPCDA  &lt;dbl&gt; 1.461240, 411.116953, 773.726241, 904.080390, 435.325…
+## $ NUAREABACC &lt;dbl&gt; 1.10954e+00, 1.35452e+04, 5.91121e+04, 6.47188e+04, 1…
+## $ COCDADESAG &lt;chr&gt; &quot;89598942&quot;, &quot;444&quot;, &quot;44&quot;, &quot;46&quot;, &quot;4636&quot;, &quot;4638258&quot;, &quot;46…
+## $ NUNIVOTCDA &lt;int&gt; 9, 4, 3, 4, 5, 8, 8, 3, 8, 4, 8, 8, 8, 8, 9, 9, 9, 8,…
+## $ NUORDEMCDA &lt;int&gt; 5, 4, 3, 3, 4, 6, 5, 3, 6, 4, 7, 7, 7, 7, 6, 8, 8, 6,…
+## $ DEDOMINIAL &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N…
+## $ DSVERSAO   &lt;chr&gt; &quot;BHO 2013 versao 1.3 de 22/07/2014&quot;, &quot;BHO 2013 versao…
+## $ geometry   &lt;MULTILINESTRING [°]&gt; MULTILINESTRING ((-56.22853..., MULTI…</code></pre>
+<p>Ao todo o objeto <code>cursos</code> tem mais de 310 mil linhas representado os cursos d’água do Brasil, e um conjunto de 12 atributos não espaciais a respeito deles. Não há, porém, uma variável indicando a qual região hidrográfica o rio pertence.</p>
+<pre class="r"><code>glimpse(regioes)</code></pre>
+<pre><code>## Observations: 12
+## Variables: 6
+## $ RHI_SG     &lt;chr&gt; &quot;J&quot;, &quot;C&quot;, &quot;D&quot;, &quot;E&quot;, &quot;F&quot;, &quot;G&quot;, &quot;H&quot;, &quot;I&quot;, &quot;L&quot;, &quot;B&quot;, &quot;A&quot;…
+## $ RHI_CD     &lt;dbl&gt; 12, 3, 9, 4, 10, 2, 5, 6, 8, 11, 1, 7
+## $ RHI_NM     &lt;chr&gt; &quot;URUGUAI&quot;, &quot;ATLÂNTICO NORDESTE OCIDENTAL&quot;, &quot;PARNAÍBA&quot;…
+## $ RHI_AR_KM2 &lt;dbl&gt; 174127.8, 268906.0, 331808.8, 285281.2, 636137.1, 386…
+## $ RHI_VE     &lt;chr&gt; &quot;2014&quot;, &quot;2014&quot;, &quot;2014&quot;, &quot;2014&quot;, &quot;2014&quot;, &quot;2014&quot;, &quot;2014…
+## $ geometry   &lt;MULTIPOLYGON [°]&gt; MULTIPOLYGON (((-53.3646 -2..., MULTIPOL…</code></pre>
+<p>É para isto que serverá o objeto <code>regioes</code>, que tem os 12 polígonos das regiões hidrográficas e 6 variáveis, sendo de nosso interesse <code>RHI_CD</code> e <code>RHI_NM</code> (respectivamente código e nome da região).</p>
+<p>Antes de avançar, vamos limpar as variáveis que não serão usadas.</p>
+<pre class="r"><code>cursos &lt;- cursos %&gt;% select(COCURSODAG, NUCOMPCDA)
+regioes &lt;- regioes %&gt;% select(RHI_NM, RHI_CD)</code></pre>
+<pre class="r"><code>head(cursos)</code></pre>
+<pre><code>## Simple feature collection with 6 features and 2 fields
+## geometry type:  MULTILINESTRING
+## dimension:      XY
+## bbox:           xmin: -65.64893 ymin: -18.06182 xmax: -55.30987 ymax: -8.016336
+## epsg (SRID):    NA
+## proj4string:    +proj=longlat +ellps=GRS80 +no_defs
+## # A tibble: 6 x 3
+##   COCURSODAG NUCOMPCDA                                             geometry
+##   &lt;chr&gt;          &lt;dbl&gt;                                &lt;MULTILINESTRING [°]&gt;
+## 1 895989422       1.46 ((-56.22853 -18.05582, -56.22904 -18.05582, -56.230…
+## 2 4448          411.   ((-55.87484 -13.08041, -55.87329 -13.07428, -55.875…
+## 3 446           774.   ((-58.27812 -10.47472, -58.29631 -10.45212, -58.298…
+## 4 4634          904.   ((-60.62792 -12.73211, -60.63603 -12.73657), (-62.7…
+## 5 46362         435.   ((-63.72088 -9.916505, -63.71614 -9.908694, -63.711…
+## 6 46382584        2.25 ((-65.63018 -10.30704, -65.63643 -10.30704, -65.640…</code></pre>
+<pre class="r"><code>head(regioes)</code></pre>
+<pre><code>## Simple feature collection with 6 features and 2 fields
+## geometry type:  MULTIPOLYGON
+## dimension:      XY
+## bbox:           xmin: -57.64388 ymin: -31.82839 xmax: -34.7931 ymax: -0.5352369
+## epsg (SRID):    NA
+## proj4string:    +proj=longlat +ellps=GRS80 +no_defs
+## # A tibble: 6 x 3
+##   RHI_NM            RHI_CD                                         geometry
+##   &lt;chr&gt;              &lt;dbl&gt;                               &lt;MULTIPOLYGON [°]&gt;
+## 1 URUGUAI               12 (((-53.3646 -26.24709, -53.36361 -26.24777, -53…
+## 2 ATLÂNTICO NORDES…      3 (((-47.71067 -0.5365409, -47.71063 -0.5365588, …
+## 3 PARNAÍBA               9 (((-41.78675 -2.744119, -41.78678 -2.744193, -4…
+## 4 ATLÂNTICO NORDES…      4 (((-41.78202 -2.757152, -41.78126 -2.758862, -4…
+## 5 SÃO FRANCISCO         10 (((-39.89673 -7.262451, -39.89648 -7.262451, -3…
+## 6 ATLÂNTICO LESTE        2 (((-39.32715 -9.595747, -39.32687 -9.595775, -3…</code></pre>
+<p>Já não há mais variáveis inúteis para a nossa finalidade, mas ainda é preciso realizar um último passo. O pacote <code>sf</code> lida melhor com projeços UTM, por isso se os dados estiverem representado por alguma projeção em formato <em>latlong</em> será preciso reprojetá-los.</p>
+<pre class="r"><code>st_crs(cursos)</code></pre>
+<pre><code>## Coordinate Reference System:
+##   No EPSG code
+##   proj4string: &quot;+proj=longlat +ellps=GRS80 +no_defs&quot;</code></pre>
+<pre class="r"><code>st_crs(regioes)</code></pre>
+<pre><code>## Coordinate Reference System:
+##   No EPSG code
+##   proj4string: &quot;+proj=longlat +ellps=GRS80 +no_defs&quot;</code></pre>
+<p>As duas bases estão configuradas com um sistema de referências de coordenadas <em>latlong</em>, então vamos transformar a projeção para UTM, particularmente o CRS Sirgas 2000 / UTM zone 23, cujo código EPSG é <a href="http://spatialreference.org/ref/epsg/31983/">31983</a>.</p>
+<pre class="r"><code>## corrigir CRS
+cursos &lt;- cursos %&gt;% st_transform(31983)
+regioes &lt;- regioes %&gt;%  st_transform(31983)</code></pre>
+<p>E abaixo é possível conferir o resultado da transformação.</p>
+<pre class="r"><code>st_crs(cursos)</code></pre>
+<pre><code>## Coordinate Reference System:
+##   EPSG: 31983 
+##   proj4string: &quot;+proj=utm +zone=23 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs&quot;</code></pre>
+<pre class="r"><code>st_crs(regioes)</code></pre>
+<pre><code>## Coordinate Reference System:
+##   EPSG: 31983 
+##   proj4string: &quot;+proj=utm +zone=23 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs&quot;</code></pre>
+<p>E para finalizar esta parte, um plot para visualizar rapidamente os dados.</p>
+<pre class="r"><code>plot(st_geometry(cursos[cursos$NUCOMPCDA &gt; 100, ]), col = &quot;blue&quot;, lwd = 0.2)
+plot(st_geometry(regioes), add = TRUE)</code></pre>
+<p><img src="/post/2019-02-11-as-veias-do-brasil-no-r.pt-br_files/figure-html/unnamed-chunk-12-1.png" width="960" /></p>
+</div>
+<div id="identificar-rhi-dos-cursos-dagua" class="section level2">
+<h2>Identificar RHI dos cursos d’água</h2>
+<p>Conforme já comentei acima, a base de cursos d’água não identifica a RHI de cada curso. Como o objetivo é colorir os rios de acordo com a região, esta é uma etapa importante do procedimento.</p>
+<p>A identificação pode ser feita a partir de uma operação de intersecção entre os cursos d’água e as regiões. Isto é, perguntaremos ao R em qual polígono de região estão as linhas dos cursos d’água.</p>
+<p>Usando em conjunto as funções <code>st_join()</code> e <code>st_intersects()</code> do pacote <code>sf</code> é possível realizar esta operação. Trabalharemos apenas com os cursos d’água com cumprimento a partir de 15 km. Além de ser o suficiente para não poluir a visualização, ainda demanda menos tempo. Ainda assim, esta etapa dura alguns minutos de processamento.</p>
+<p>Talvez valha a pena rodar o código e parar para tomar um café ;)</p>
+<pre class="r"><code>## Identificar RHI de cada cursos d&#39;água
+cursos &lt;- cursos %&gt;%
+  filter(NUCOMPCDA &gt;= 15) %&gt;% 
+  st_join(regioes %&gt;% select(RHI_NM, RHI_CD),
+          join = st_intersects)</code></pre>
+<pre class="r"><code>head(cursos)</code></pre>
+<pre><code>## Simple feature collection with 6 features and 4 fields
+## geometry type:  MULTILINESTRING
+## dimension:      XY
+## bbox:           xmin: -2575625 ymin: 7751014 xmax: -617523.6 ymax: 9069233
+## epsg (SRID):    NA
+## proj4string:    +proj=utm +zone=23 +south +ellps=GRS80 +units=m +no_defs
+## # A tibble: 6 x 5
+##   COCURSODAG NUCOMPCDA RHI_NM  RHI_CD                              geometry
+##   &lt;chr&gt;          &lt;dbl&gt; &lt;chr&gt;    &lt;dbl&gt;                 &lt;MULTILINESTRING [m]&gt;
+## 1 4448            411. AMAZÔN…      1 ((-685345.4 8528286, -685204.7 85289…
+## 2 446             774. AMAZÔN…      1 ((-965436.9 8810810, -967588.4 88132…
+## 3 4634            904. AMAZÔN…      1 ((-1215932 8539948, -1216812 8539381…
+## 4 46362           435. AMAZÔN…      1 ((-1587682 8843464, -1587188 8844405…
+## 5 464            1428. AMAZÔN…      1 ((-2480176 8541432, -2479726 8541993…
+## 6 466            2081. AMAZÔN…      1 ((-1540308 7786575, -1539283 7785714…</code></pre>
+<p>Além do código e do cumprimento do curso d’água, a base agora tem também duas novas variáveis identificando a região hidrográfica, criadas a partir da intersecção com os polígonos das regiões.</p>
+</div>
+<div id="identificar-e-corrigir-erros-de-interseccao" class="section level2">
+<h2>Identificar e corrigir erros de intersecção</h2>
+<p>Os divisores de água são dados pela parte mais alta do relevo modelado pelos rios. É isto o que define o território de uma bacia hidrográfia. As regiões hidrográficas, por sua vez, compreendem um aninhamento de bacias hidrográficas. Como tal, em tese um curso d’água não deveria cruzar as bordas de uma região para outra.</p>
+<p>Mas em termos de geolocalização sempre há um nível de incerteza, de modo que operação realizada no passo anterior era vulnerável a possíveis inconsistências entre as duas bases. Assim, se há casos em que a linha representando o rio cruza as bordas de um polígono regional, esta linha identificou duas regiões e ela estará duplicada na base <code>cursos</code>.</p>
+<pre class="r"><code># identificar cursos duplicados
+cod &lt;- cursos %&gt;%
+  filter(duplicated(COCURSODAG)) %&gt;%
+  pull(COCURSODAG)
+
+cod</code></pre>
+<pre><code>## character(0)</code></pre>
+<p>A busca acima confirmou que há 63 casos duplicados, isto é, 63 cursos d’água estão em duas regiões.</p>
+<p>Considerando que a região em que o rio tem sua maior parte é a correta, para corrigir isto repetiremos o processo de intersecção com a base de regiões, mas desta vez com os centroides apenas dos 63 cursos d’água identificados.</p>
+<pre class="r"><code># separar cursos duplicados
+erros &lt;- cursos %&gt;% filter(COCURSODAG %in% cod)
+dim(erros)</code></pre>
+<pre><code>## [1] 0 5</code></pre>
+<pre class="r"><code># identificar RHI dos centroides dos cursos separados
+erros_cent &lt;- erros %&gt;% 
+  distinct(COCURSODAG, .keep_all = TRUE) %&gt;%
+  select(COCURSODAG, NUCOMPCDA) %&gt;% 
+  st_centroid() %&gt;% 
+  st_join(regioes, join = st_intersects)
+
+# limpar geometria
+st_geometry(erros_cent) &lt;- NULL
+
+# mesclar em erros
+erros &lt;- erros %&gt;%
+  select(-RHI_NM, -RHI_CD) %&gt;% 
+  merge(erros_cent %&gt;% select(COCURSODAG, RHI_NM, RHI_CD), by = &quot;COCURSODAG&quot;, all.x = T) %&gt;% 
+  distinct()
+
+# Retirar cursos errados e cursos d&#39;água fora do território brasileiro 
+cursos &lt;- cursos %&gt;%
+filter(!(COCURSODAG %in% cod), !is.na(RHI_CD)) %&gt;%
+  # inserir cursos com RHI correta
+  rbind(erros)</code></pre>
+<pre class="r"><code>glimpse(cursos)</code></pre>
+<pre><code>## Observations: 32,695
+## Variables: 5
+## $ COCURSODAG &lt;chr&gt; &quot;4448&quot;, &quot;446&quot;, &quot;4634&quot;, &quot;46362&quot;, &quot;464&quot;, &quot;466&quot;, &quot;44&quot;, &quot;…
+## $ NUCOMPCDA  &lt;dbl&gt; 411.11695, 773.72624, 904.08039, 435.32552, 1427.9110…
+## $ RHI_NM     &lt;chr&gt; &quot;AMAZÔNICA&quot;, &quot;AMAZÔNICA&quot;, &quot;AMAZÔNICA&quot;, &quot;AMAZÔNICA&quot;, &quot;…
+## $ RHI_CD     &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 11, 11, 11, 11, 3, 3, 3, 9, 4, 9…
+## $ geometry   &lt;MULTILINESTRING [m]&gt; MULTILINESTRING ((-685345.4..., MULTI…</code></pre>
+<pre class="r"><code>table(duplicated(cursos$COCURSODAG))</code></pre>
+<pre><code>## 
+## FALSE 
+## 32695</code></pre>
+<p>Restaram na base 32.695 observações e não há mais duplicidade. Agora sim é possível plotar os mapas.</p>
+</div>
+<div id="plotar-os-mapas" class="section level2">
+<h2>Plotar os mapas</h2>
+<p>O fundo do mapa será todo preto e o <code>ggplot2</code> não tem nenhum tema embutido assim. Para obter o layout desejado sem repetir código, criaremos a função abaixo a partir do tema <code>theme_minimal()</code> e a reutilizaremos em todos os mapas.</p>
+<pre class="r"><code># Definir o tema utiliado na criação dos gráficos
+tema &lt;- function() {
+  return(
+    theme_minimal() +
+      theme(panel.grid = element_line(colour = &#39;transparent&#39;),
+            panel.background = element_rect(fill = &#39;black&#39;, colour = NA),
+            plot.background = element_rect(fill = &quot;black&quot;, colour = NA),
+            plot.margin = unit(rep(0, 4), &quot;lines&quot;),
+            axis.title = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks.x = element_blank(),
+            axis.ticks.y = element_blank(),
+            legend.title = element_text(size = 8),
+            legend.text = element_text(size = 6),
+            legend.position = &quot;none&quot;,
+            title = element_text(color = &quot;white&quot;),
+            strip.text = element_text(color = &quot;white&quot;))
+  )
+}</code></pre>
+<p>Além disso, vou criar uma paleta com 12 cores da escala do arco íris, para colorir os mapas.</p>
+<pre class="r"><code>cores &lt;- rainbow(12, s = .4, v = 1)
+cores</code></pre>
+<pre><code>##  [1] &quot;#FF9999FF&quot; &quot;#FFCC99FF&quot; &quot;#FFFF99FF&quot; &quot;#CCFF99FF&quot; &quot;#99FF99FF&quot;
+##  [6] &quot;#99FFCCFF&quot; &quot;#99FFFFFF&quot; &quot;#99CCFFFF&quot; &quot;#9999FFFF&quot; &quot;#CC99FFFF&quot;
+## [11] &quot;#FF99FFFF&quot; &quot;#FF99CCFF&quot;</code></pre>
+<div id="mapa-do-brasil" class="section level3">
+<h3>Mapa do Brasil</h3>
+<p>Agora é parte mais fácil. Com o <code>ggplot2</code> é relativamente simples plotar objetos <em>simple features</em>.</p>
+<pre class="r"><code># criar o mapa do Brasil
+ggplot() +
+  geom_sf(data = cursos %&gt;% filter(NUCOMPCDA &gt; 40),
+          aes(colour = RHI_NM, size = NUCOMPCDA, alpha = NUCOMPCDA)) +
+  scale_colour_manual(values = cores) +
+  scale_size_continuous(range = c(.1, 1)) +
+  tema()</code></pre>
+<p><img src="/post/2019-02-11-as-veias-do-brasil-no-r.pt-br_files/figure-html/unnamed-chunk-21-1.png" width="960" /></p>
+<p>Para criar o efeito visual de relevo a partir dos rios, defini o tamanho e a transparência do curso d’água com base no cumprimento do mesmo, dado pela variável <code>NUCOMPCDA</code>. Além disso, determinei que o tamanho das linhas deveria seguir um intervalo de 0.1 (para os menores rios) até 1 (para os maiores).</p>
+</div>
+<div id="mapas-das-regioes-hidrograficas" class="section level3">
+<h3>Mapas das regiões hidrográficas</h3>
+<p>Já a criação dos mapas das regiões é uma tarefa repetitiva. Para não repetir o código acima 12 vezes criei uma função que replica a criação do mapa feita acima, com a adaptação de filtrar uma região antes de gerar o mapa, além de selecionar uma das cores da paleta e o nome da região, que será utilizado no título.</p>
+<pre class="r"><code>## Criar os mapas de todas as regiões hidrográficas e salvar
+plot_regioes &lt;- function(codigo) {
+  cor &lt;- cores[codigo]
+  regiao &lt;- unique(cursos$RHI_NM[cursos$RHI_CD == codigo])
+  return(
+    cursos %&gt;%
+      filter(RHI_CD == codigo) %&gt;% 
+      ggplot() +
+      geom_sf(aes(colour = cor, size = NUCOMPCDA, alpha = NUCOMPCDA)) +
+      scale_colour_manual(values = cor) +
+      scale_size_continuous(range = c(.1, 1)) +
+      labs(title = &quot;&quot;, subtitle = paste(&quot;RHI&quot;, str_to_title((regiao)))) +
+      tema()
+  )
+}</code></pre>
+<p>Os códigos das regiões vão de 1 a 12, conforme abaixo:</p>
+<pre class="r"><code>sort(unique(cursos$RHI_CD))</code></pre>
+<pre><code>##  [1]  1  2  3  4  5  6  7  8  9 10 11 12</code></pre>
+<p>Fica fácil, então, criar um looping com <code>lapply()</code> para utilizar a função <code>plot_regioes()</code> e plotar automaticamente os 12 mapas.</p>
+<pre class="r"><code>lapply(1:12, function(x) {
+  plot_regioes(x)
+  })</code></pre>
+<pre><code>## [[1]]</code></pre>
+<p><img src="/post/2019-02-11-as-veias-do-brasil-no-r.pt-br_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
+<pre><code>## 
+## [[2]]</code></pre>
+<p><img src="/post/2019-02-11-as-veias-do-brasil-no-r.pt-br_files/figure-html/unnamed-chunk-24-2.png" width="672" /></p>
+<pre><code>## 
+## [[3]]</code></pre>
+<p><img src="/post/2019-02-11-as-veias-do-brasil-no-r.pt-br_files/figure-html/unnamed-chunk-24-3.png" width="672" /></p>
+<pre><code>## 
+## [[4]]</code></pre>
+<p><img src="/post/2019-02-11-as-veias-do-brasil-no-r.pt-br_files/figure-html/unnamed-chunk-24-4.png" width="672" /></p>
+<pre><code>## 
+## [[5]]</code></pre>
+<p><img src="/post/2019-02-11-as-veias-do-brasil-no-r.pt-br_files/figure-html/unnamed-chunk-24-5.png" width="672" /></p>
+<pre><code>## 
+## [[6]]</code></pre>
+<p><img src="/post/2019-02-11-as-veias-do-brasil-no-r.pt-br_files/figure-html/unnamed-chunk-24-6.png" width="672" /></p>
+<pre><code>## 
+## [[7]]</code></pre>
+<p><img src="/post/2019-02-11-as-veias-do-brasil-no-r.pt-br_files/figure-html/unnamed-chunk-24-7.png" width="672" /></p>
+<pre><code>## 
+## [[8]]</code></pre>
+<p><img src="/post/2019-02-11-as-veias-do-brasil-no-r.pt-br_files/figure-html/unnamed-chunk-24-8.png" width="672" /></p>
+<pre><code>## 
+## [[9]]</code></pre>
+<p><img src="/post/2019-02-11-as-veias-do-brasil-no-r.pt-br_files/figure-html/unnamed-chunk-24-9.png" width="672" /></p>
+<pre><code>## 
+## [[10]]</code></pre>
+<p><img src="/post/2019-02-11-as-veias-do-brasil-no-r.pt-br_files/figure-html/unnamed-chunk-24-10.png" width="672" /></p>
+<pre><code>## 
+## [[11]]</code></pre>
+<p><img src="/post/2019-02-11-as-veias-do-brasil-no-r.pt-br_files/figure-html/unnamed-chunk-24-11.png" width="672" /></p>
+<pre><code>## 
+## [[12]]</code></pre>
+<p><img src="/post/2019-02-11-as-veias-do-brasil-no-r.pt-br_files/figure-html/unnamed-chunk-24-12.png" width="672" /></p>
+<p>E pronto! Os mapas estão todos criados!</p>
+<p>Algum comentário? Sugestão? Escreva-nos!</p>
+</div>
+</div>

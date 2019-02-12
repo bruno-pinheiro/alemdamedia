@@ -2,3 +2,10 @@
 .Rhistory
 .RData
 .Ruserdata
+
+/blogdown
+/content/post/data-raw
+/content/post/graphs
+/public/post/data-raw
+/public/post/graphs
+

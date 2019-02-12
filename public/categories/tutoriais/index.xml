@@ -7,10 +7,20 @@
     <generator>Hugo -- gohugo.io</generator>
     <managingEditor>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</managingEditor>
     <webMaster>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</webMaster>
-    <lastBuildDate>Thu, 25 Oct 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 11 Feb 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/categories/tutoriais/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>As veias do Brasil no R</title>
+      <link>/post/as-veias-do-brasil-no-r.pt-br/</link>
+      <pubDate>Mon, 11 Feb 2019 00:00:00 +0000</pubDate>
+      <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
+      <guid>/post/as-veias-do-brasil-no-r.pt-br/</guid>
+      <description>Há cerca de dois anos um amigo (o Carlos Diego) me chamou não lembro em qual chat e mostrou o trabalho da geógrafa Fejetlenfej, que produziu mapas colorindo as bacias hidrográficas dos EUA, criando um efeito belíssimo.
+Antropólogo e mestrando em gestão e regulação de recursos hídricos, ele viu naqueles mapas uma forma de diferente e sensível de explicitar a importância dos rios em nossa relação com o espaço e os territórios.</description>
+    </item>
     
     <item>
       <title>Como identificar raios de influência de cidades no R</title>
@@ -33,7 +43,7 @@ Muitas vezes, por exemplo, é necessário manipular os símbolos das legendas do
     </item>
     
     <item>
-      <title>Como criar um site com (blogdown/RStudio/Hugo) &#43; (GitHub/Netlify)</title>
+      <title>Como criar um site no RStudio com blogdown/Hugo &#43; GitHub/Netlify</title>
       <link>/post/como-criar-site-com-rstudio-blogdown-hugo-github-netlify/</link>
       <pubDate>Thu, 24 May 2018 00:00:00 +0000</pubDate>
       <author>bruno.lahunmen@gmail.com (Bruno Pinheiro de Oliveira)</author>
