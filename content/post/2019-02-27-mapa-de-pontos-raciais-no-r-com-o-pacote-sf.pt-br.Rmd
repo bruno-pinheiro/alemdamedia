@@ -1,0 +1,293 @@
+---
+title: "Mapas raciais de pontos no R com o pacote sf"
+subtitle: 'da obtenção dos dados até o mapa final'
+author: Bruno Pinheiro
+date: '2019-02-27'
+slug: mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br
+categories:
+  - Tutoriais
+tags:
+  - mapa de pontos
+  - análise espacial
+  - desigualdade racial
+  - Peruíbe
+  - sf
+  - ggplot2
+type: 'post'
+bigimg: [{src: "/img/mapa-racial-pontos-capa.png"}]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE, error = FALSE, message = FALSE,
+  fig.align = "center", fig.width = 12
+  )
+```
+
+O trabalho com mapas raciais feito por Hugo Nicolau e divulgado em seu [blog](https://desigualdadesespaciais.wordpress.com/tag/mapa-de-pontos-2/) me chamou a atenção para a metodologia conhecida como mapas de pontos de contagem, potente para a análise da densidade de fenômenos. 
+
+Ela é usada em uma porção de áreas como epidemiologia, demografia, logística, biologia e tem grande espaço para aplicações no campo das políticas públicas, pois é potente para abordar uma série de problemas, entre eles associações de desigualdade.
+
+Recentemente busquei formas de reproduzir o trabalho do Hugo no R e, fortunamente, encontrei que é na verdade um procedimento relativamente simples. Neste post vou compartilhar como construir mapas de ponto de contagens no R em base *tidy*, criando mapas da cidade de Peruíbe, no litoral sul de São Paulo.
+
+Para isto utilizarei os pacotes `sf` para manipular os dados espaciais e o `ggplot2` para gerar os mapas. Além disso, farei uso também de funções criadas por mim, agrupadas por hora no pacote `seda`, para obter os dados do IBGE.
+
+## Mapas de pontos de contagem
+
+A ideia é simples: cada ponto representará uma quantidade n de observações (ex.: um ponto para cada indivíduo, para cada 10 etc) e eles serão distribuídos aleatoriamente dentro de polígonos espaciais aos quais estão associados.
+
+Exemplo. Quando faz o Censo o IBGE registra dados demográficos e socioeconômicos de toda a população brasileira e ada pessoa é registra no setor censitário de sua residência. O setores censitários são pequenas porções territoriais contíguas utlizadas para fins cadastrais e constituem a unidade básica de desagregação espacial do Censo.
+
+Com estes dados construir um mapa de pontos significa distribuir aleatoriamente pontos representando pessoas em seus respectivos setores censitários.
+
+## Passo 1: obter os dados
+
+A ideia é criar um mapa que permita analisar a associação espacial entre raça e renda dentro dos limites da cidade de Peruíbe.
+
+O procedimento envolve especificamente variáveis de raça e renda dos resultados do universo do Censo 2010. Estes dados estão disponíveis no [ftp](ftp://ftp.ibge.gov.br) do IBGE e no seu [geoftp](ftp://geoftp.ibge.gov.br).
+
+Os dados demográficos fazem parte dos [resultados do universo](ftp://ftp.ibge.gov.br/Censos/Censo_Demografico_2010/Resultados_do_Universo/) e os dados espaciais, isto é, os polígonos dos setores censitários, integram o conjunto de dados sobre [malhas territoriais](ftp://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/).
+
+Obter dados do IBGE, embora fácil, é uma tarefa dispendiosa. São muitos arquivos, é muito pesado para guardar tudo (além de desnecessário já que o IBGE já faz o serviço de armazená-los) e quem trabalha com estes dados vira e mexe precisa novamente baixá-los.
+
+Para facilitar esta tarefa eu criei algumas funções que facilitam a obtenção dos dados do IBGE diretamente no R, particularmente os dos resultados do universo e os dados espaciais. Elas fazem parte de um pacote chamado `seda`. Para construir os mapas não é necessário instalá-lo, basta ter os dados e você pode obtê-los nos links acima. Mas se você preferir seguir pelo caminho mais fácil:
+
+**Obs.:** o pacote `seda` foi testado apenas em linux Debian 9
+
+```{r}
+## para instalar o pacote
+# devtools::install_github("bruno-pinheiro/seda")
+library(seda)
+# outros pacotes
+library(sf)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(gridExtra)
+```
+
+Quero a malha de setores censitários e as seguintes variáveis populacionais:
+
+- número de habitantes nos setores censitários por raça
+- número de habitantes nos setores censitários por classe social
+
+Como a análise envolve renda, trabalharei apenas com dados a respeito de pessoas com 10 anos ou mais, já que esta é a faixa etária a partir do qual o IBGE passa a coletar informações de rendimento.
+
+Usando o pacote `seda` vou baixar e importar o shapefile de setores censitários do estado de São Paulo. Esta etapa demorará um pouco, pois os dados são pesados. Dependendo da sua conexão, dá tempo de pegar (ou tomar) um café.
+
+```{r, cache=TRUE}
+# malha de setores
+url <- "ftp://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_de_setores_censitarios__divisoes_intramunicipais/censo_2010/setores_censitarios_shp/sp/sp_setores_censitarios.zip"
+get_ibge(url)
+
+# dados tabulares
+url <- "ftp://ftp.ibge.gov.br/Censos/Censo_Demografico_2010/Resultados_do_Universo/Agregados_por_Setores_Censitarios/SP_Exceto_a_Capital_20190207.zip"
+get_ibge(url)
+
+rm(url)
+```
+
+Os arquivos foram baixados na pasta temporária e preciso saber seus nomes para importar no R.
+
+Vou então buscar o nome do shapefile...
+
+```{r}
+#listar arquivo .shp
+list_tmp("shp")
+```
+
+e listar os arquivos em formato `.csv` que foram baixados.
+
+```{r}
+# listar arquivos .csv
+list_tmp("csv")
+```
+
+Pronto. O shapefile está nomeado como "35SEE250GC_SIR.shp" e as variáveis tabulares de interesse estão nos seguintes arquivos (sim, é preciso ler o dicionário de variáveis):
+
+- `Pessoa03_SP.csv`
+    + *raça*: V002:V006
+- `Pessoa11_SP.csv` e `Pessoa12_SP.csv`:
+    + *sexo*: V001
+- `PessoaRenda_SP.csv`:
+    + *renda*: V001 a V009 (excluindo pessoas sem rendimento)
+
+Então já posso importar os dados:
+
+```{r, cache = TRUE}
+# importar dados em lista
+camadas <- list(
+    # raca
+  raca = read_ibge("Pessoa03_SP.csv") %>% select(Cod_setor, V002:V006),
+  # renda
+  renda = read_ibge("PessoaRenda_SP2.csv") %>% select(Cod_setor, V001:V009),
+  # setores censitários
+  setores = read_geoibge("35SEE250GC_SIR")
+  )
+camadas
+```
+
+Como resultado cada uma das três bases é um elemento dentro da lista `camadas`.
+
+O shapefile contem os polígonos dos setores censitários e as duas bases tabulates contém informações sobre raça e renda dos habitantes dos `r nrow(camadas[[3]])` setores censitários do estado de São Paulo, embora eu queira apenas os de Peruíbe.
+
+O próximo passo é preparar os dados.
+
+## Passo 2: preparar os dados
+
+Farei o filtro e a limpeza das observações e variáveis que não serão utilizadas, além dos tratamentos necessários. Ao fim quero ter as seguintes variáveis na base de setores censitários:
+
+- **raca**: brancos, pretos, amarelos, pardos, indigenas
+- **renda**: classeA, classeB, classeC, classeD, classeE
+
+Com relação à renda, vale destacar que as faixas de renda são baseadas em salários mínimos e que em 2010 o salário mínimo era de R\$ 510. Especificamente, as faixas de renda serão:
+
+- classeA: > 10 salários mínimos
+- classeB: 5 a 10 salários mínimos
+- classeC: 2 a 5 salários mínimos
+- classeD: 1 a 2 salários mínimos
+- classeE: até 1 salário mínimo
+
+```{r}
+# filtrar setores censitários de Peruíbe
+camadas$setores <- camadas$setores %>% 
+  filter(NM_MUNICIP == "PERUÍBE") %>% 
+  select(CD_GEOCODI)
+
+# manipular variáveis de raça e renda
+camadas$raca <- camadas$raca %>%  
+  filter(Cod_setor %in% camadas$setores$CD_GEOCODI) %>% 
+  mutate(Cod_setor = as.character(Cod_setor)) %>% 
+  mutate_at(vars(-Cod_setor), as.numeric) %>% 
+  rename(CD_GEOCODI = Cod_setor, brancos = V002, pretos = V003,
+         amarelos = V004, pardos = V005, indigenas = V006)
+
+camadas$renda <- camadas$renda %>%  
+      filter(Cod_setor %in% camadas$setores$CD_GEOCODI) %>% 
+      mutate(Cod_setor = as.character(Cod_setor)) %>% 
+      mutate_at(vars(-Cod_setor), as.numeric) %>% 
+  mutate(classeE = V001 + V002,
+         classeC = V004 + V005,
+         classeA = V007 + V008 + V009) %>% 
+  select(CD_GEOCODI = Cod_setor, classeA, classeB = V006,
+         classeC, classeD = V003, classeE)
+
+# mesclar dados de raça e renda na malha de setores
+camadas$setores <- camadas$setores %>% 
+  select(CD_GEOCODI) %>% 
+  left_join(camadas$raca, by = "CD_GEOCODI") %>% 
+  left_join(camadas$renda, by = "CD_GEOCODI") %>%
+  arrange(CD_GEOCODI)
+
+# checar dados
+camadas$setores
+```
+
+Aí está a variável de identificação do setor censitário reunida às 10 variáveis que indicam o número de pessoas de cada grupo populacional em cada setor censitário.
+
+## Passo 3: Processamento espacial
+
+### Entendendo o procedimento
+
+Uma forma bastante simples de realizar a atribuição espacial aleatória de pontos no R é com a função `st_sample()` do pacote `sf`. O que a função faz é pegar um argumento numérico associado a um polígono, que especifique o número de pontos a serem criados, e atribuir aleatoriamente o número determinado de pontos dentro deste polígono.
+
+Este número determinado de pontos $n$ é dado a partir de uma razão $b$ do número de habitantes dos grupos populacionais nos setores censitários $k_{mi}$, em que $k$ é o número de habitantes, $m$ é o grupo populacional e $i$ é o setor censitário. Ou seja, é simples como:
+
+$$n_{mi} = \frac{k_{mi}}{b}$$
+
+São mais de 60 mil habitantes, o que geraria uma sobreposição desnecessária no mapa. Por isso vamos reduzir esta densidade em uma razão $b = 5$, isto é, um ponto para cada 5 pessoas.
+
+### Atribuição aleatória dos pontos
+
+Para realizar a atribuição aleatória dos pontos é preciso tratar os valores ausentes, pois a função `st_sample()` precisa do número de pontos a serem atribuídos para cada setor. Se não há o número de pessoas indíginas em um setor, por exemplo, a função falhará.
+
+Além de distribuir aleatoriamente os pontos nos setores censitários, eu quero:
+
+- realizar a itersecção entre os pontos e os polígonos, para identificar em qual setor cada ponto está
+- criar uma variável indicando o grupo populacional que os pontos representam
+
+E por fim reagruparei os pontos representando a distribuição espacial da população por raça e aqueles que representam a distribuição por renda.
+
+É necessário repetir este procedimento para cada um dos grupos, isto é, 10 vezes. Aplicando a função `lapply()` o processo é feito em *looping*, os objetos são estocando numa lista e evita-se repetição de código.
+
+```{r, cache=TRUE}
+# separar dados missing
+nas <- camadas$setores[is.na(camadas$setores$brancos), ]
+camadas$setores <- camadas$setores[!is.na(camadas$setores$brancos), ]
+
+# separar nomes das variáveis
+v <- names(as_tibble(camadas$setores)[, 2:11])
+grupos <- c("Brancos", "Pretos", "Amarelos", "Pardos", "Indígenas",
+            "Classe A", "Classe B", "Classe C", "Classe D", "Classe E")
+
+# realizar a atribuição dos pontos para cada grupo populacional
+pontos <- lapply(1:10, function(i) {
+    st_sample(camadas$setores, round(camadas$setores[, v[i]][[v[i]]]) / 5) %>% 
+      st_sf() %>% 
+      st_join(camadas$setores %>% select(CD_GEOCODI), join = st_intersects) %>%
+      mutate(categoria = grupos[i])
+})
+
+# unir grupos de faixa e renda
+# e reunir setores censitários
+camadas <- list(
+  raca = do.call(rbind, pontos[(1:5)]),
+  renda = do.call(rbind, pontos[6:10]),
+  setores = rbind(camadas$setores, nas)
+  )
+
+rm(nas, pontos, v)
+
+camadas
+```
+
+Os dados agora estão prontos para ser visualizados.
+
+## Passo 4: Criar os mapas
+
+### Mapas de raças
+
+```{r, fig.height=8, cache=TRUE}
+pal <- list(
+  raca = c("yellow2", "dodgerblue", "red", "orange4", "black"),
+  renda = rev(c("#ffffb2","#fecc5c","#fd8d3c","#f03b20","#bd0026"))
+  )
+
+leg <- c("Raça", "Classe social")
+
+p <- lapply(1:2, function(i) {
+  ggplot() +
+    geom_sf(data = st_geometry(camadas$setores),
+            col = "grey30", alpha = 0, lwd = .1) +
+    geom_sf(data = camadas[[i]], aes(colour = categoria),
+            size = .3, show.legend = "point") +
+    scale_colour_manual(values = pal[[i]], leg[i]) +
+    guides(color = guide_legend(override.aes = list(size=2, alpha = 1))) +
+    ggtitle(paste("Distribuição espacial dos habitantes por", leg[i])) +
+    light_map_theme()
+})
+
+do.call(grid.arrange, c(p, ncol = 2))
+```
+
+### Mapas dos grupos populacionais
+
+```{r, fig.height=9, cache=TRUE}
+p <- lapply(1:2, function(i)
+    ggplot() +
+      geom_sf(data = camadas$setores,
+              color = "grey30", lwd = .06, alpha = 0) +
+      geom_sf(data = camadas[[i]], aes(colour = categoria),
+              size = 1.2, alpha = 0.08) +
+      scale_colour_manual(values = pal[[i]], guide = FALSE) +
+      ggtitle(leg[i]) +
+      facet_wrap(~categoria, ncol = 5) +
+      light_map_theme()
+    )
+
+do.call(gridExtra::grid.arrange, c(p, nrow = 2))
+```
+
+
+E aí, depois de ver esses mapas, quais suas conclusões sobre a relação entre renda, raça e local de moradia na cidade de Peruíbe?
+

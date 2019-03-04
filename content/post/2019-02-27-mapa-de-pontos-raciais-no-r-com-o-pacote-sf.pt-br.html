@@ -1,0 +1,385 @@
+---
+title: "Mapas raciais de pontos no R com o pacote sf"
+subtitle: 'da obtenção dos dados até o mapa final'
+author: Bruno Pinheiro
+date: '2019-02-27'
+slug: mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br
+categories:
+  - Tutoriais
+tags:
+  - mapa de pontos
+  - análise espacial
+  - desigualdade racial
+  - Peruíbe
+  - sf
+  - ggplot2
+type: 'post'
+bigimg: [{src: "/img/mapa-racial-pontos-capa.png"}]
+---
+
+
+
+<p>O trabalho com mapas raciais feito por Hugo Nicolau e divulgado em seu <a href="https://desigualdadesespaciais.wordpress.com/tag/mapa-de-pontos-2/">blog</a> me chamou a atenção para a metodologia conhecida como mapas de pontos de contagem, potente para a análise da densidade de fenômenos.</p>
+<p>Ela é usada em uma porção de áreas como epidemiologia, demografia, logística, biologia e tem grande espaço para aplicações no campo das políticas públicas, pois é potente para abordar uma série de problemas, entre eles associações de desigualdade.</p>
+<p>Recentemente busquei formas de reproduzir o trabalho do Hugo no R e, fortunamente, encontrei que é na verdade um procedimento relativamente simples. Neste post vou compartilhar como construir mapas de ponto de contagens no R em base <em>tidy</em>, criando mapas da cidade de Peruíbe, no litoral sul de São Paulo.</p>
+<p>Para isto utilizarei os pacotes <code>sf</code> para manipular os dados espaciais e o <code>ggplot2</code> para gerar os mapas. Além disso, farei uso também de funções criadas por mim, agrupadas por hora no pacote <code>seda</code>, para obter os dados do IBGE.</p>
+<div id="mapas-de-pontos-de-contagem" class="section level2">
+<h2>Mapas de pontos de contagem</h2>
+<p>A ideia é simples: cada ponto representará uma quantidade n de observações (ex.: um ponto para cada indivíduo, para cada 10 etc) e eles serão distribuídos aleatoriamente dentro de polígonos espaciais aos quais estão associados.</p>
+<p>Exemplo. Quando faz o Censo o IBGE registra dados demográficos e socioeconômicos de toda a população brasileira e ada pessoa é registra no setor censitário de sua residência. O setores censitários são pequenas porções territoriais contíguas utlizadas para fins cadastrais e constituem a unidade básica de desagregação espacial do Censo.</p>
+<p>Com estes dados construir um mapa de pontos significa distribuir aleatoriamente pontos representando pessoas em seus respectivos setores censitários.</p>
+</div>
+<div id="passo-1-obter-os-dados" class="section level2">
+<h2>Passo 1: obter os dados</h2>
+<p>A ideia é criar um mapa que permita analisar a associação espacial entre raça e renda dentro dos limites da cidade de Peruíbe.</p>
+<p>O procedimento envolve especificamente variáveis de raça e renda dos resultados do universo do Censo 2010. Estes dados estão disponíveis no <a href="ftp://ftp.ibge.gov.br">ftp</a> do IBGE e no seu <a href="ftp://geoftp.ibge.gov.br">geoftp</a>.</p>
+<p>Os dados demográficos fazem parte dos <a href="ftp://ftp.ibge.gov.br/Censos/Censo_Demografico_2010/Resultados_do_Universo/">resultados do universo</a> e os dados espaciais, isto é, os polígonos dos setores censitários, integram o conjunto de dados sobre <a href="ftp://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/">malhas territoriais</a>.</p>
+<p>Obter dados do IBGE, embora fácil, é uma tarefa dispendiosa. São muitos arquivos, é muito pesado para guardar tudo (além de desnecessário já que o IBGE já faz o serviço de armazená-los) e quem trabalha com estes dados vira e mexe precisa novamente baixá-los.</p>
+<p>Para facilitar esta tarefa eu criei algumas funções que facilitam a obtenção dos dados do IBGE diretamente no R, particularmente os dos resultados do universo e os dados espaciais. Elas fazem parte de um pacote chamado <code>seda</code>. Para construir os mapas não é necessário instalá-lo, basta ter os dados e você pode obtê-los nos links acima. Mas se você preferir seguir pelo caminho mais fácil:</p>
+<p><strong>Obs.:</strong> o pacote <code>seda</code> foi testado apenas em linux Debian 9</p>
+<pre class="r"><code>## para instalar o pacote
+# devtools::install_github(&quot;bruno-pinheiro/seda&quot;)
+library(seda)
+# outros pacotes
+library(sf)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(gridExtra)</code></pre>
+<p>Quero a malha de setores censitários e as seguintes variáveis populacionais:</p>
+<ul>
+<li>número de habitantes nos setores censitários por raça</li>
+<li>número de habitantes nos setores censitários por classe social</li>
+</ul>
+<p>Como a análise envolve renda, trabalharei apenas com dados a respeito de pessoas com 10 anos ou mais, já que esta é a faixa etária a partir do qual o IBGE passa a coletar informações de rendimento.</p>
+<p>Usando o pacote <code>seda</code> vou baixar e importar o shapefile de setores censitários do estado de São Paulo. Esta etapa demorará um pouco, pois os dados são pesados. Dependendo da sua conexão, dá tempo de pegar (ou tomar) um café.</p>
+<pre class="r"><code># malha de setores
+url &lt;- &quot;ftp://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_de_setores_censitarios__divisoes_intramunicipais/censo_2010/setores_censitarios_shp/sp/sp_setores_censitarios.zip&quot;
+get_ibge(url)
+
+# dados tabulares
+url &lt;- &quot;ftp://ftp.ibge.gov.br/Censos/Censo_Demografico_2010/Resultados_do_Universo/Agregados_por_Setores_Censitarios/SP_Exceto_a_Capital_20190207.zip&quot;
+get_ibge(url)
+
+rm(url)</code></pre>
+<p>Os arquivos foram baixados na pasta temporária e preciso saber seus nomes para importar no R.</p>
+<p>Vou então buscar o nome do shapefile…</p>
+<pre class="r"><code>#listar arquivo .shp
+list_tmp(&quot;shp&quot;)</code></pre>
+<pre><code>## character(0)</code></pre>
+<p>e listar os arquivos em formato <code>.csv</code> que foram baixados.</p>
+<pre class="r"><code># listar arquivos .csv
+list_tmp(&quot;csv&quot;)</code></pre>
+<pre><code>## character(0)</code></pre>
+<p>Pronto. O shapefile está nomeado como “35SEE250GC_SIR.shp” e as variáveis tabulares de interesse estão nos seguintes arquivos (sim, é preciso ler o dicionário de variáveis):</p>
+<ul>
+<li><code>Pessoa03_SP.csv</code>
+<ul>
+<li><em>raça</em>: V002:V006</li>
+</ul></li>
+<li><code>Pessoa11_SP.csv</code> e <code>Pessoa12_SP.csv</code>:
+<ul>
+<li><em>sexo</em>: V001</li>
+</ul></li>
+<li><code>PessoaRenda_SP.csv</code>:
+<ul>
+<li><em>renda</em>: V001 a V009 (excluindo pessoas sem rendimento)</li>
+</ul></li>
+</ul>
+<p>Então já posso importar os dados:</p>
+<pre class="r"><code># importar dados em lista
+camadas &lt;- list(
+    # raca
+  raca = read_ibge(&quot;Pessoa03_SP.csv&quot;) %&gt;% select(Cod_setor, V002:V006),
+  # renda
+  renda = read_ibge(&quot;PessoaRenda_SP2.csv&quot;) %&gt;% select(Cod_setor, V001:V009),
+  # setores censitários
+  setores = read_geoibge(&quot;35SEE250GC_SIR&quot;)
+  )
+camadas</code></pre>
+<pre><code>## $raca
+## # A tibble: 47,733 x 6
+##    Cod_setor V002  V003  V004  V005  V006 
+##        &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;
+##  1   3.50e14 249   3     28    24    0    
+##  2   3.50e14 550   13    86    136   0    
+##  3   3.50e14 432   3     65    24    0    
+##  4   3.50e14 613   8     63    111   0    
+##  5   3.50e14 744   4     31    33    1    
+##  6   3.50e14 740   4     52    71    0    
+##  7   3.50e14 438   13    15    96    0    
+##  8   3.50e14 656   17    41    112   1    
+##  9   3.50e14 424   20    7     113   0    
+## 10   3.50e14 465   11    2     256   1    
+## # … with 47,723 more rows
+## 
+## $renda
+## # A tibble: 47,733 x 10
+##    Cod_setor V001  V002  V003  V004  V005  V006  V007  V008  V009 
+##        &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;
+##  1   3.50e14 0     43    63    33    47    34    4     3     4    
+##  2   3.50e14 10    135   168   78    83    56    10    9     2    
+##  3   3.50e14 0     57    94    45    79    61    16    22    3    
+##  4   3.50e14 8     122   125   78    83    88    16    10    12   
+##  5   3.50e14 5     133   179   74    98    55    5     8     7    
+##  6   3.50e14 11    147   175   90    84    65    8     9     3    
+##  7   3.50e14 15    159   118   46    24    22    1     2     2    
+##  8   3.50e14 26    152   172   90    87    42    4     2     1    
+##  9   3.50e14 10    109   156   41    49    13    2     3     0    
+## 10   3.50e14 14    160   217   48    20    15    2     1     0    
+## # … with 47,723 more rows
+## 
+## $setores
+## Simple feature collection with 68296 features and 13 fields
+## geometry type:  MULTIPOLYGON
+## dimension:      XY
+## bbox:           xmin: -335491.8 ymin: 7196857 xmax: 586149.1 ymax: 7803609
+## epsg (SRID):    31983
+## proj4string:    +proj=utm +zone=23 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
+## # A tibble: 68,296 x 14
+##       ID CD_GEOCODI TIPO  CD_GEOCODB NM_BAIRRO CD_GEOCODS NM_SUBDIST
+##    &lt;dbl&gt; &lt;chr&gt;      &lt;chr&gt; &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt;     
+##  1 67103 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
+##  2 67104 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
+##  3 67105 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
+##  4 67106 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
+##  5 67107 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
+##  6 67108 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
+##  7 67109 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
+##  8 67110 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
+##  9 67111 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
+## 10 67112 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
+## # … with 68,286 more rows, and 7 more variables: CD_GEOCODD &lt;chr&gt;,
+## #   NM_DISTRIT &lt;chr&gt;, CD_GEOCODM &lt;chr&gt;, NM_MUNICIP &lt;chr&gt;, NM_MICRO &lt;chr&gt;,
+## #   NM_MESO &lt;chr&gt;, geometry &lt;MULTIPOLYGON [m]&gt;</code></pre>
+<p>Como resultado cada uma das três bases é um elemento dentro da lista <code>camadas</code>.</p>
+<p>O shapefile contem os polígonos dos setores censitários e as duas bases tabulates contém informações sobre raça e renda dos habitantes dos 68296 setores censitários do estado de São Paulo, embora eu queira apenas os de Peruíbe.</p>
+<p>O próximo passo é preparar os dados.</p>
+</div>
+<div id="passo-2-preparar-os-dados" class="section level2">
+<h2>Passo 2: preparar os dados</h2>
+<p>Farei o filtro e a limpeza das observações e variáveis que não serão utilizadas, além dos tratamentos necessários. Ao fim quero ter as seguintes variáveis na base de setores censitários:</p>
+<ul>
+<li><strong>raca</strong>: brancos, pretos, amarelos, pardos, indigenas</li>
+<li><strong>renda</strong>: classeA, classeB, classeC, classeD, classeE</li>
+</ul>
+<p>Com relação à renda, vale destacar que as faixas de renda são baseadas em salários mínimos e que em 2010 o salário mínimo era de R$ 510. Especificamente, as faixas de renda serão:</p>
+<ul>
+<li>classeA: &gt; 10 salários mínimos</li>
+<li>classeB: 5 a 10 salários mínimos</li>
+<li>classeC: 2 a 5 salários mínimos</li>
+<li>classeD: 1 a 2 salários mínimos</li>
+<li>classeE: até 1 salário mínimo</li>
+</ul>
+<pre class="r"><code># filtrar setores censitários de Peruíbe
+camadas$setores &lt;- camadas$setores %&gt;% 
+  filter(NM_MUNICIP == &quot;PERUÍBE&quot;) %&gt;% 
+  select(CD_GEOCODI)
+
+# manipular variáveis de raça e renda
+camadas$raca &lt;- camadas$raca %&gt;%  
+  filter(Cod_setor %in% camadas$setores$CD_GEOCODI) %&gt;% 
+  mutate(Cod_setor = as.character(Cod_setor)) %&gt;% 
+  mutate_at(vars(-Cod_setor), as.numeric) %&gt;% 
+  rename(CD_GEOCODI = Cod_setor, brancos = V002, pretos = V003,
+         amarelos = V004, pardos = V005, indigenas = V006)
+
+camadas$renda &lt;- camadas$renda %&gt;%  
+      filter(Cod_setor %in% camadas$setores$CD_GEOCODI) %&gt;% 
+      mutate(Cod_setor = as.character(Cod_setor)) %&gt;% 
+      mutate_at(vars(-Cod_setor), as.numeric) %&gt;% 
+  mutate(classeE = V001 + V002,
+         classeC = V004 + V005,
+         classeA = V007 + V008 + V009) %&gt;% 
+  select(CD_GEOCODI = Cod_setor, classeA, classeB = V006,
+         classeC, classeD = V003, classeE)
+
+# mesclar dados de raça e renda na malha de setores
+camadas$setores &lt;- camadas$setores %&gt;% 
+  select(CD_GEOCODI) %&gt;% 
+  left_join(camadas$raca, by = &quot;CD_GEOCODI&quot;) %&gt;% 
+  left_join(camadas$renda, by = &quot;CD_GEOCODI&quot;) %&gt;%
+  arrange(CD_GEOCODI)
+
+# checar dados
+camadas$setores</code></pre>
+<pre><code>## Simple feature collection with 130 features and 11 fields
+## geometry type:  MULTIPOLYGON
+## dimension:      XY
+## bbox:           xmin: 284871.1 ymin: 7294947 xmax: 307339.1 ymax: 7330827
+## epsg (SRID):    31983
+## proj4string:    +proj=utm +zone=23 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
+## # A tibble: 130 x 12
+##    CD_GEOCODI brancos pretos amarelos pardos indigenas classeA classeB
+##    &lt;chr&gt;        &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+##  1 353760205…     424      5       31     33         0      24      51
+##  2 353760205…     154      5        2     41         0       4      23
+##  3 353760205…     125      1       33      7         0       4       8
+##  4 353760205…     333     13       17     82         0       6      27
+##  5 353760205…     267      9       27     86         0       9      21
+##  6 353760205…     268     26       15    110         0       1       8
+##  7 353760205…     257     13       10     31         0       6      17
+##  8 353760205…     338     12       17     81         0      10      35
+##  9 353760205…     448     10       23     87         0      12      47
+## 10 353760205…     434      4        8     41         0      10      43
+## # … with 120 more rows, and 4 more variables: classeC &lt;dbl&gt;,
+## #   classeD &lt;dbl&gt;, classeE &lt;dbl&gt;, geometry &lt;MULTIPOLYGON [m]&gt;</code></pre>
+<p>Aí está a variável de identificação do setor censitário reunida às 10 variáveis que indicam o número de pessoas de cada grupo populacional em cada setor censitário.</p>
+</div>
+<div id="passo-3-processamento-espacial" class="section level2">
+<h2>Passo 3: Processamento espacial</h2>
+<div id="entendendo-o-procedimento" class="section level3">
+<h3>Entendendo o procedimento</h3>
+<p>Uma forma bastante simples de realizar a atribuição espacial aleatória de pontos no R é com a função <code>st_sample()</code> do pacote <code>sf</code>. O que a função faz é pegar um argumento numérico associado a um polígono, que especifique o número de pontos a serem criados, e atribuir aleatoriamente o número determinado de pontos dentro deste polígono.</p>
+<p>Este número determinado de pontos <span class="math inline">\(n\)</span> é dado a partir de uma razão <span class="math inline">\(b\)</span> do número de habitantes dos grupos populacionais nos setores censitários <span class="math inline">\(k_{mi}\)</span>, em que <span class="math inline">\(k\)</span> é o número de habitantes, <span class="math inline">\(m\)</span> é o grupo populacional e <span class="math inline">\(i\)</span> é o setor censitário. Ou seja, é simples como:</p>
+<p><span class="math display">\[n_{mi} = \frac{k_{mi}}{b}\]</span></p>
+<p>São mais de 60 mil habitantes, o que geraria uma sobreposição desnecessária no mapa. Por isso vamos reduzir esta densidade em uma razão <span class="math inline">\(b = 5\)</span>, isto é, um ponto para cada 5 pessoas.</p>
+</div>
+<div id="atribuicao-aleatoria-dos-pontos" class="section level3">
+<h3>Atribuição aleatória dos pontos</h3>
+<p>Para realizar a atribuição aleatória dos pontos é preciso tratar os valores ausentes, pois a função <code>st_sample()</code> precisa do número de pontos a serem atribuídos para cada setor. Se não há o número de pessoas indíginas em um setor, por exemplo, a função falhará.</p>
+<p>Além de distribuir aleatoriamente os pontos nos setores censitários, eu quero:</p>
+<ul>
+<li>realizar a itersecção entre os pontos e os polígonos, para identificar em qual setor cada ponto está</li>
+<li>criar uma variável indicando o grupo populacional que os pontos representam</li>
+</ul>
+<p>E por fim reagruparei os pontos representando a distribuição espacial da população por raça e aqueles que representam a distribuição por renda.</p>
+<p>É necessário repetir este procedimento para cada um dos grupos, isto é, 10 vezes. Aplicando a função <code>lapply()</code> o processo é feito em <em>looping</em>, os objetos são estocando numa lista e evita-se repetição de código.</p>
+<pre class="r"><code># separar dados missing
+nas &lt;- camadas$setores[is.na(camadas$setores$brancos), ]
+camadas$setores &lt;- camadas$setores[!is.na(camadas$setores$brancos), ]
+
+# separar nomes das variáveis
+v &lt;- names(as_tibble(camadas$setores)[, 2:11])
+grupos &lt;- c(&quot;Brancos&quot;, &quot;Pretos&quot;, &quot;Amarelos&quot;, &quot;Pardos&quot;, &quot;Indígenas&quot;,
+            &quot;Classe A&quot;, &quot;Classe B&quot;, &quot;Classe C&quot;, &quot;Classe D&quot;, &quot;Classe E&quot;)
+
+# realizar a atribuição dos pontos para cada grupo populacional
+pontos &lt;- lapply(1:10, function(i) {
+    st_sample(camadas$setores, round(camadas$setores[, v[i]][[v[i]]]) / 5) %&gt;% 
+      st_sf() %&gt;% 
+      st_join(camadas$setores %&gt;% select(CD_GEOCODI), join = st_intersects) %&gt;%
+      mutate(categoria = grupos[i])
+})
+
+# unir grupos de faixa e renda
+# e reunir setores censitários
+camadas &lt;- list(
+  raca = do.call(rbind, pontos[(1:5)]),
+  renda = do.call(rbind, pontos[6:10]),
+  setores = rbind(camadas$setores, nas)
+  )
+
+rm(nas, pontos, v)
+
+camadas</code></pre>
+<pre><code>## $raca
+## Simple feature collection with 12123 features and 2 fields
+## geometry type:  POINT
+## dimension:      XY
+## bbox:           xmin: 285434.2 ymin: 7296287 xmax: 307169.2 ymax: 7330478
+## epsg (SRID):    31983
+## proj4string:    +proj=utm +zone=23 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
+## First 10 features:
+##         CD_GEOCODI categoria                 geometry
+## 1  353760205000001   Brancos POINT (297010.8 7308840)
+## 2  353760205000001   Brancos POINT (297351.2 7309128)
+## 3  353760205000001   Brancos POINT (297365.7 7308909)
+## 4  353760205000001   Brancos POINT (297592.4 7309000)
+## 5  353760205000001   Brancos POINT (297305.6 7308634)
+## 6  353760205000001   Brancos POINT (297378.7 7308735)
+## 7  353760205000001   Brancos POINT (297296.3 7308868)
+## 8  353760205000001   Brancos POINT (297364.5 7308965)
+## 9  353760205000001   Brancos POINT (297387.4 7308843)
+## 10 353760205000001   Brancos POINT (297408.1 7308989)
+## 
+## $renda
+## Simple feature collection with 6263 features and 2 fields
+## geometry type:  POINT
+## dimension:      XY
+## bbox:           xmin: 285678.5 ymin: 7296972 xmax: 307237.9 ymax: 7330292
+## epsg (SRID):    31983
+## proj4string:    +proj=utm +zone=23 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
+## First 10 features:
+##         CD_GEOCODI categoria                 geometry
+## 1  353760205000001  Classe A POINT (297559.8 7309100)
+## 2  353760205000001  Classe A POINT (297342.2 7308677)
+## 3  353760205000001  Classe A POINT (297281.6 7308805)
+## 4  353760205000001  Classe A POINT (297265.6 7308925)
+## 5  353760205000001  Classe A POINT (297465.7 7309034)
+## 6  353760205000002  Classe A POINT (297697.6 7308986)
+## 7  353760205000003  Classe A POINT (297221.8 7308453)
+## 8  353760205000004  Classe A POINT (297030.3 7308254)
+## 9  353760205000014  Classe A POINT (297030.3 7308254)
+## 10 353760205000005  Classe A POINT (296717.8 7308895)
+## 
+## $setores
+## Simple feature collection with 130 features and 11 fields
+## geometry type:  MULTIPOLYGON
+## dimension:      XY
+## bbox:           xmin: 284871.1 ymin: 7294947 xmax: 307339.1 ymax: 7330827
+## epsg (SRID):    31983
+## proj4string:    +proj=utm +zone=23 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
+## # A tibble: 130 x 12
+##    CD_GEOCODI brancos pretos amarelos pardos indigenas classeA classeB
+##    &lt;chr&gt;        &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+##  1 353760205…     424      5       31     33         0      24      51
+##  2 353760205…     154      5        2     41         0       4      23
+##  3 353760205…     125      1       33      7         0       4       8
+##  4 353760205…     333     13       17     82         0       6      27
+##  5 353760205…     267      9       27     86         0       9      21
+##  6 353760205…     268     26       15    110         0       1       8
+##  7 353760205…     257     13       10     31         0       6      17
+##  8 353760205…     338     12       17     81         0      10      35
+##  9 353760205…     448     10       23     87         0      12      47
+## 10 353760205…     434      4        8     41         0      10      43
+## # … with 120 more rows, and 4 more variables: classeC &lt;dbl&gt;,
+## #   classeD &lt;dbl&gt;, classeE &lt;dbl&gt;, geometry &lt;MULTIPOLYGON [m]&gt;</code></pre>
+<p>Os dados agora estão prontos para ser visualizados.</p>
+</div>
+</div>
+<div id="passo-4-criar-os-mapas" class="section level2">
+<h2>Passo 4: Criar os mapas</h2>
+<div id="mapas-de-racas" class="section level3">
+<h3>Mapas de raças</h3>
+<pre class="r"><code>pal &lt;- list(
+  raca = c(&quot;yellow2&quot;, &quot;dodgerblue&quot;, &quot;red&quot;, &quot;orange4&quot;, &quot;black&quot;),
+  renda = rev(c(&quot;#ffffb2&quot;,&quot;#fecc5c&quot;,&quot;#fd8d3c&quot;,&quot;#f03b20&quot;,&quot;#bd0026&quot;))
+  )
+
+leg &lt;- c(&quot;Raça&quot;, &quot;Classe social&quot;)
+
+p &lt;- lapply(1:2, function(i) {
+  ggplot() +
+    geom_sf(data = st_geometry(camadas$setores),
+            col = &quot;grey30&quot;, alpha = 0, lwd = .1) +
+    geom_sf(data = camadas[[i]], aes(colour = categoria),
+            size = .3, show.legend = &quot;point&quot;) +
+    scale_colour_manual(values = pal[[i]], leg[i]) +
+    guides(color = guide_legend(override.aes = list(size=2, alpha = 1))) +
+    ggtitle(paste(&quot;Distribuição espacial dos habitantes por&quot;, leg[i])) +
+    light_map_theme()
+})
+
+do.call(grid.arrange, c(p, ncol = 2))</code></pre>
+<p><img src="/post/2019-02-27-mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br_files/figure-html/unnamed-chunk-8-1.png" width="1152" style="display: block; margin: auto;" /></p>
+</div>
+<div id="mapas-dos-grupos-populacionais" class="section level3">
+<h3>Mapas dos grupos populacionais</h3>
+<pre class="r"><code>p &lt;- lapply(1:2, function(i)
+    ggplot() +
+      geom_sf(data = camadas$setores,
+              color = &quot;grey30&quot;, lwd = .06, alpha = 0) +
+      geom_sf(data = camadas[[i]], aes(colour = categoria),
+              size = 1.2, alpha = 0.08) +
+      scale_colour_manual(values = pal[[i]], guide = FALSE) +
+      ggtitle(leg[i]) +
+      facet_wrap(~categoria, ncol = 5) +
+      light_map_theme()
+    )
+
+do.call(gridExtra::grid.arrange, c(p, nrow = 2))</code></pre>
+<p><img src="/post/2019-02-27-mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br_files/figure-html/unnamed-chunk-9-1.png" width="1152" style="display: block; margin: auto;" /></p>
+<p>E aí, depois de ver esses mapas, quais suas conclusões sobre a relação entre renda, raça e local de moradia na cidade de Peruíbe?</p>
+</div>
+</div>
