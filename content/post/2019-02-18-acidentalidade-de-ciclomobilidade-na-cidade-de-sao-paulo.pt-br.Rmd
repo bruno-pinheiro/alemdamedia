@@ -1,0 +1,289 @@
+---
+title: Acidentalidade de ciclomobilidade na cidade de São Paulo
+author: Bruno Pinheiro
+date: '2019-02-18'
+slug: acidentalidade-de-ciclomobilidade-na-cidade-de-sao-paulo.pt-br
+categories:
+- Análises
+tags:
+  - ciclomobilidade
+  - mobilidade urbana
+  - planejamento urbano
+  - acidentalidade
+  - ideciclo
+type: ''
+subtitle: 'Análise do IDECiclo 2018 da Auditoria Cidadã'
+image: ''
+code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      error = FALSE,
+                      warning = FALSE,
+                      fig.align = 'center',
+                      fig.width = 9)
+```
+
+## Os dados
+
+Os dados de acidentalidade estão divididos em três conjuntos, contendo informações a respeito dos acidentes, das vítimas e dos veículos.
+
+Esta análise será realizada com bases de dados previamente preparadas, em procedimento que agregou os dados referentes aos anos de 2011 à 2017, por conjunto.
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(gridExtra)
+
+acidentes <- readRDS("data-raw/acidentes-mortos-feridos-2011-2017.rds")
+vitimas <- readRDS("data-raw/vitimas-mortos-feridos-2011-2017.rds")
+veiculos <- readRDS("data-raw/veiculos-mortos-feridos-2011-2017.rds")
+```
+
+A base de acidentes contem `r nrow(acidentes)` observações, que correspondem a ocorrências registradas pela CET entre 2011 e 2017. Há ainda `r ncol(acidentes)` colunas, com variáveis descrevendo atributos de cada um dos acidentes, com variações ao longo dos anos.
+
+```{r}
+glimpse(acidentes)
+```
+
+A base de vitimas contem, por sua vez, `r nrow(vitimas)` observações, cada uma com dados de vítimas dos acidentes registrados pela CET organizados em `r ncol(vitimas)` variáveis.
+
+```{r}
+glimpse(vitimas)
+```
+
+Já no conjunto de dados sobre os veículos existem `r nrow(veiculos)` observações, com os veículos envolvidos nos acidentes constantes na base de acidentes. Há `r ncol(veiculos)` variáveis com atributos dos meios de transporte acidentados.
+
+```{r}
+glimpse(veiculos)
+```
+
+### Valores ausentes
+
+Como há variáveis que existem em alguns anos, mas não em outros, algumas variáveis não descrevem aspectos dos acidentes, das vítimas e dos veículos para todos os anos. O gráficos abaixo mostram a análise de valores ausentes (`NA`) nos três conjuntos de dados e explicitam este problema.
+
+```{r, fig.height=11}
+theme_set(theme_minimal())
+
+acidentes %>% 
+  gather(key, value, -ano) %>% 
+  group_by(ano, key) %>% 
+  count(na = is.na(value)) %>% 
+  mutate(na = if_else(na == TRUE, "Sim", "Não")) %>% 
+  ggplot(aes(x = key, y = n, fill = na)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("lightcoral", "lightgrey"), "Valor é NA?") +
+  facet_wrap(~ano, ncol = 7, scales = "free_x") +
+  labs(title = "Valores ausentes na base de acidentes",
+       x = NULL, y = NULL) +
+  theme(axis.text.x = element_blank(),
+        legend.position = "top") +
+  coord_flip()
+```
+
+```{r, fig.height=4}
+vitimas %>% 
+  gather(key, value, -ano) %>% 
+  group_by(ano, key) %>% 
+  count(na = is.na(value)) %>% 
+  mutate(na = if_else(na == TRUE, "Sim", "Não")) %>% 
+  ggplot(aes(x = key, y = n, fill = na)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("lightcoral", "lightgrey"), "Valor é NA?") +
+  facet_wrap(~ano, ncol = 7, scales = "free_x") +
+  labs(title = "Valores ausentes na base de vítimas",
+       x = NULL, y = NULL) +
+  theme(axis.text.x = element_blank(),
+        legend.position = "top") +
+  coord_flip()
+```
+
+```{r, fig.width=5, fig.height=2.5}
+veiculos %>% 
+  gather(key, value) %>% 
+  group_by(key) %>% 
+  count(na = is.na(value)) %>% 
+  mutate(na = if_else(na == TRUE, "Sim", "Não")) %>% 
+  ggplot(aes(x = key, y = n, fill = na)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("lightcoral", "lightgrey"), "Valor é NA?") +
+  labs(title = "Valores ausentes na base de veículos",
+       x = NULL, y = NULL) +
+  theme(axis.text.x = element_blank(),
+        legend.position = "top") +
+  coord_flip()
+```
+
+## Análise dos acidentes
+
+### O número de acidentes vem caindo com os anos
+
+Em 7 anos (2011 a 2017) a CET registrou `r nrow(acidentes)` acidentes na cidade de São Paulo.
+
+```{r, fig.width = 7, fig.height=8}
+total_acidentes <- acidentes %>%
+  group_by(ano = as.factor(ano)) %>% 
+  summarise(geral = n(),
+            bicicleta = sum(bicicleta, na.rm = TRUE)) %>% 
+  mutate(Percentual = round(bicicleta / geral, 3))
+
+p1 <- ggplot(total_acidentes, aes(x = ano, y = geral)) +
+  geom_line(group = 1) +
+  geom_point(size = 3) +
+  geom_hline(aes(yintercept = mean(total_acidentes$geral)),
+             linetype = 5, color = "darkgrey", lwd = 1.5) +
+  scale_y_continuous(limits = c(0, 30000), breaks = seq(0, 30000, 5000)) +
+  labs(title = "Evolução temporal do total anual de acidentes",
+       subtitle = "todos os acidentes",
+       x = NULL, y = NULL) +
+  annotate("text", x = 2, y = 17000, color = "darkgrey",
+           label = paste("Média de", round(mean(total_acidentes$geral)),
+                         "\nacidentes por ano"),
+           fontface = "bold")
+
+p2 <- ggplot(total_acidentes, aes(x = as.factor(ano), y = bicicleta, group = 1)) +
+  geom_line(color = "lightcoral") +
+  geom_point(size = 3, color = "lightcoral") +
+  geom_hline(aes(yintercept = mean(total_acidentes$bicicleta)),
+             linetype = 5, color = "darkgrey", lwd = 1.5) +
+  scale_y_continuous(limits = c(0, 1000), breaks = seq(0, 1000, 100)) +
+  labs(title = NULL, subtitle = "somente bicicleta",
+       x = NULL, y = NULL) +
+  annotate("text", x = 2, y = 460, color = "darkgrey",
+           label = paste("Média de", round(mean(total_acidentes$bicicleta)),
+                         "\nacidentes por ano"),
+           fontface = "bold")
+
+grid.arrange(p1, p2, ncol = 1)
+```
+
+### E o número de mortos também reduziu...
+
+```{r, fig.width = 7, fig.height=8}
+mortalidade <- acidentes %>% 
+  group_by(ano = as.factor(ano)) %>% 
+  summarise(geral = sum(mortos, na.rm = TRUE)) %>% 
+  left_join(
+    acidentes %>% 
+      filter(bicicleta == 1) %>% 
+      group_by(ano = as.factor(ano)) %>% 
+      summarise(bicicleta = sum(mortos, na.rm = TRUE)),
+    by = "ano"
+    ) %>% 
+  mutate(taxag = geral / total_acidentes$geral * 100,
+         taxab = bicicleta / total_acidentes$bicicleta * 100)
+
+# mortos no geral
+p1 <- ggplot(mortalidade, aes(x = ano, y = geral)) +
+  geom_point(color = "black", size = 3) +
+  geom_line(color = "black", group = 1) +
+  geom_hline(aes(yintercept = mean(mortalidade$geral)),
+             linetype = 5, color = "darkgrey", lwd = 1.5) +
+  scale_y_continuous(breaks = seq(0, 1400, 200)) +
+  labs(title = "Número de mortos em acidentes por ano",
+       subtitle = "todos os acidentes",
+       x = NULL, y = NULL) +
+  annotate("text", x = 2, y = 700, color = "darkgrey", fontface = "bold",
+           label = paste("Em média", round(mean(mortalidade$geral)),
+                         "\nvítimas fatais por ano"))
+
+# mortes com bicicleta
+p2 <- ggplot(mortalidade, aes(x = ano, y = bicicleta)) +
+  geom_point(color = "lightcoral", size = 3) +
+  geom_line(color = "lightcoral", group = 1) +
+  geom_hline(aes(yintercept = mean(mortalidade$bicicleta, na.rm = TRUE)),
+             linetype = 5, color = "darkgrey", lwd = 1.5) +
+  scale_y_continuous(limits = c(0, 55), breaks = seq(0, 55, 10)) +
+  labs(title = NULL, subtitle = "somente bicicleta",
+       x = NULL, y = NULL) +
+  annotate("text", x = 2, y = 35, color = "darkgrey", fontface = "bold",
+           label = paste("Em média", round(mean(mortalidade$bicicleta, na.rm = TRUE)),
+                         "\nvítimas fatais por ano"))
+
+grid.arrange(p1, p2, ncol = 1)
+```
+
+### ... mas a taxa de mortalidade cresceu
+
+Aproximadamente 9 pessoas morrem a cada 100 acidentes com bicicleta
+
+```{r}
+mortalidade %>% 
+  select(taxag, taxab, ano) %>% 
+  gather(key, value, -ano) %>% 
+  mutate(key = if_else(key == "taxag", "geral", "bicicleta")) %>% 
+  ggplot(aes(x = ano, y = value, colour = key)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = key)) +
+  scale_colour_manual(values = c("lightcoral", "black")) +
+  scale_y_continuous(breaks = seq(0, 9, 1)) +
+  labs(title = "Evolução anual da taxa de fatalidade",
+       subtitle = "n mortos para cada 100 acidentes",
+       x = NULL, y = NULL)
+```
+
+### Bicicleta é sempre a quinta no ranking de veículos
+
+```{r, fig.width=9, fig.height=3}
+veiculos_acidentes <- acidentes %>% 
+  select(ano, automovel:outros) %>% 
+  gather(veiculo, valor, -ano) %>% 
+  group_by(ano, veiculo) %>% 
+  summarise(total = sum(valor, na.rm = TRUE)) %>% 
+  mutate(veiculo = if_else(str_detect(veiculo, "camin"), "caminhoes", veiculo),
+         veiculo = gsub("vuc", "caminhoes", veiculo),
+         veiculo = gsub("carreta", "outros", veiculo),
+         veiculo = if_else(str_detect(veiculo, "onibus"), "onibus", veiculo),
+         veiculo = if_else(str_detect(veiculo, "moto"), "moto", veiculo),
+         veiculo = gsub("jipe", "automovel", veiculo),
+         veiculo = gsub("carroca", "outros", veiculo),
+         veiculo = gsub("carroca", "outros", veiculo)) %>% 
+  group_by(ano, veiculo) %>% 
+  summarise(total = sum(total, na.rm = TRUE)) %>% 
+  mutate(bike = if_else(veiculo == "bicicleta", "bicicleta", "outros"))
+
+plot_ano <- function(data){
+  veiculos_acidentes %>% filter(ano == data) %>%  
+    ggplot(aes(x = reorder(veiculo, -total), y = total, fill = bike)) +
+    geom_bar(stat = "identity") +
+    scale_fill_manual(values = c("lightcoral", "darkgrey"), guide = FALSE) +
+    scale_y_continuous(limits = c(0, 20000)) +
+    labs(subtitle = data, x = NULL, y = NULL) +
+    theme(axis.text.x = element_text(angle = 90))
+}
+
+p <- lapply(c(2011:2014, 2016:2017), function(x) plot_ano(x))
+
+do.call(gridExtra::grid.arrange, c(p, ncol = 6))
+```
+
+Na base de 2015 não há variáveis indicando o envolvimento de tipos de veículos nos acidentes, por isto o gráfico deste ano não mostra nenhum dado..
+
+```{r}
+knitr::kable(
+  total_acidentes %>% 
+  mutate(Percentual = scales::percent(round(bicicleta / geral, 3))) %>% 
+  select(ano, Percentual) %>% 
+  spread(ano, Percentual),
+  caption = "Peso percentual dos acidentes com bicicleta em relação ao total"
+)
+```
+
+### Colisões e atropelamentos são os acidentes mais comuns
+
+```{r}
+acidentes %>% 
+  count(ano = as.factor(ano), tipo_acidente) %>%
+  mutate(tipo_acidente = if_else(n < 1000, "Outros", tipo_acidente)) %>%
+  group_by(ano, tipo_acidente) %>% 
+  summarise(n = sum(n)) %>% 
+  group_by(ano) %>% 
+  mutate(prop = prop.table(n)) %>% 
+  ggplot(aes(x = ano, y = prop, colour = reorder(tipo_acidente, -prop))) +
+  geom_point() +
+  geom_line(aes(group = tipo_acidente)) +
+  scale_colour_brewer(palette = "Set2", "Tipo de\nacidente") +
+  scale_y_continuous(labels = scales::percent)
+```
