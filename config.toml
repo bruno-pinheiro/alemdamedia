@@ -1,18 +1,18 @@
-baseurl = "https://alemdamedia.netlify.com/"
-DefaultContentLanguage = "pt-br"
-
 title = "Além da Média"
 theme = "beautifulhugo"
-metaDataFormat = "yaml"
-pygmentsStyle = "trac"
+baseurl = "https://alemdamedia.netlify.com/"
+DefaultContentLanguage = "pt-br"
+ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
+
+pygmentsUseClassic = false
 pygmentsUseClasses = true
 pygmentsCodeFences = true
-pygmentsCodefencesGuessSyntax = true
-#pygmentsUseClassic = true
-#pygmentOptions = "linenos=inline"
-ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
-disqusShortname = "alemdamedia"
-googleAnalytics = "UA-134237576-1"
+
+[params]
+  useChroma = true
+  disqusShortname = "alemdamedia"
+  googleAnalytics = "UA-134237576-1"
+  # custom_css = "css/custom.css"
 
 [Params]
 #  homeTitle = "Além da média" # Set a different text for the header on the home page
