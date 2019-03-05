@@ -1,6 +1,6 @@
 ---
 title: "Mapas raciais de pontos no R com o pacote sf"
-subtitle: 'da obtenção dos dados até o mapa final'
+subtitle: 'Da obtenção dos dados até os mapas'
 author: Bruno Pinheiro
 date: '2019-02-27'
 slug: mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br
@@ -25,8 +25,9 @@ bigimg: [{src: "/img/mapa-racial-pontos-capa.png"}]
 <p>Para isto utilizarei os pacotes <code>sf</code> para manipular os dados espaciais e o <code>ggplot2</code> para gerar os mapas. Além disso, farei uso também de funções criadas por mim, agrupadas por hora no pacote <code>seda</code>, para obter os dados do IBGE.</p>
 <div id="mapas-de-pontos-de-contagem" class="section level2">
 <h2>Mapas de pontos de contagem</h2>
+<p>Criar um mapa de pontos é simples quando você já tem o layer de pontos. O que esta metodologia propõe é recriar representações espaciais dadas por polígonos em representações espaciais dadas por pontos, baseadas nas informações associadas aos polígonos.</p>
 <p>A ideia é simples: cada ponto representará uma quantidade n de observações (ex.: um ponto para cada indivíduo, para cada 10 etc) e eles serão distribuídos aleatoriamente dentro de polígonos espaciais aos quais estão associados.</p>
-<p>Exemplo. Quando faz o Censo o IBGE registra dados demográficos e socioeconômicos de toda a população brasileira e ada pessoa é registra no setor censitário de sua residência. O setores censitários são pequenas porções territoriais contíguas utlizadas para fins cadastrais e constituem a unidade básica de desagregação espacial do Censo.</p>
+<p>Exemplo. Quando faz o Censo o IBGE registra dados demográficos e socioeconômicos de toda a população brasileira e cada pessoa é registrada no setor censitário de sua residência. O setores censitários são pequenas porções territoriais contíguas utlizadas para fins cadastrais e constituem a unidade básica de desagregação espacial do Censo.</p>
 <p>Com estes dados construir um mapa de pontos significa distribuir aleatoriamente pontos representando pessoas em seus respectivos setores censitários.</p>
 </div>
 <div id="passo-1-obter-os-dados" class="section level2">
@@ -36,11 +37,11 @@ bigimg: [{src: "/img/mapa-racial-pontos-capa.png"}]
 <p>Os dados demográficos fazem parte dos <a href="ftp://ftp.ibge.gov.br/Censos/Censo_Demografico_2010/Resultados_do_Universo/">resultados do universo</a> e os dados espaciais, isto é, os polígonos dos setores censitários, integram o conjunto de dados sobre <a href="ftp://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/">malhas territoriais</a>.</p>
 <p>Obter dados do IBGE, embora fácil, é uma tarefa dispendiosa. São muitos arquivos, é muito pesado para guardar tudo (além de desnecessário já que o IBGE já faz o serviço de armazená-los) e quem trabalha com estes dados vira e mexe precisa novamente baixá-los.</p>
 <p>Para facilitar esta tarefa eu criei algumas funções que facilitam a obtenção dos dados do IBGE diretamente no R, particularmente os dos resultados do universo e os dados espaciais. Elas fazem parte de um pacote chamado <code>seda</code>. Para construir os mapas não é necessário instalá-lo, basta ter os dados e você pode obtê-los nos links acima. Mas se você preferir seguir pelo caminho mais fácil:</p>
+<pre class="r"><code># para instalar o pacote seda
+devtools::install_github(&quot;bruno-pinheiro/seda&quot;)</code></pre>
 <p><strong>Obs.:</strong> o pacote <code>seda</code> foi testado apenas em linux Debian 9</p>
-<pre class="r"><code>## para instalar o pacote
-# devtools::install_github(&quot;bruno-pinheiro/seda&quot;)
+<pre class="r"><code># carregar pacotes
 library(seda)
-# outros pacotes
 library(sf)
 library(dplyr)
 library(tidyr)
@@ -66,11 +67,36 @@ rm(url)</code></pre>
 <p>Vou então buscar o nome do shapefile…</p>
 <pre class="r"><code>#listar arquivo .shp
 list_tmp(&quot;shp&quot;)</code></pre>
-<pre><code>## character(0)</code></pre>
+<pre><code>## [1] &quot;/tmp/RtmpxdkmxU/35SEE250GC_SIR.shp&quot;</code></pre>
 <p>e listar os arquivos em formato <code>.csv</code> que foram baixados.</p>
 <pre class="r"><code># listar arquivos .csv
 list_tmp(&quot;csv&quot;)</code></pre>
-<pre><code>## character(0)</code></pre>
+<pre><code>##  [1] &quot;/tmp/RtmpxdkmxU/Basico_SP2.csv&quot;          
+##  [2] &quot;/tmp/RtmpxdkmxU/Domicilio01_SP2.csv&quot;     
+##  [3] &quot;/tmp/RtmpxdkmxU/Domicilio02_SP2.csv&quot;     
+##  [4] &quot;/tmp/RtmpxdkmxU/DomicilioRenda_SP2.csv&quot;  
+##  [5] &quot;/tmp/RtmpxdkmxU/Entorno01_SP2.csv&quot;       
+##  [6] &quot;/tmp/RtmpxdkmxU/Entorno02_SP2.csv&quot;       
+##  [7] &quot;/tmp/RtmpxdkmxU/Entorno03_SP2.csv&quot;       
+##  [8] &quot;/tmp/RtmpxdkmxU/Entorno04_SP2.csv&quot;       
+##  [9] &quot;/tmp/RtmpxdkmxU/Entorno05_SP2.csv&quot;       
+## [10] &quot;/tmp/RtmpxdkmxU/Pessoa01_SP.csv&quot;         
+## [11] &quot;/tmp/RtmpxdkmxU/Pessoa02_SP.csv&quot;         
+## [12] &quot;/tmp/RtmpxdkmxU/Pessoa03_SP.csv&quot;         
+## [13] &quot;/tmp/RtmpxdkmxU/Pessoa04_SP.csv&quot;         
+## [14] &quot;/tmp/RtmpxdkmxU/Pessoa05_SP.csv&quot;         
+## [15] &quot;/tmp/RtmpxdkmxU/Pessoa06_SP.csv&quot;         
+## [16] &quot;/tmp/RtmpxdkmxU/Pessoa07_SP.csv&quot;         
+## [17] &quot;/tmp/RtmpxdkmxU/Pessoa08_SP.csv&quot;         
+## [18] &quot;/tmp/RtmpxdkmxU/Pessoa09_SP.csv&quot;         
+## [19] &quot;/tmp/RtmpxdkmxU/Pessoa10_SP.csv&quot;         
+## [20] &quot;/tmp/RtmpxdkmxU/Pessoa11_SP.csv&quot;         
+## [21] &quot;/tmp/RtmpxdkmxU/Pessoa12_SP.csv&quot;         
+## [22] &quot;/tmp/RtmpxdkmxU/Pessoa13_SP.csv&quot;         
+## [23] &quot;/tmp/RtmpxdkmxU/PessoaRenda_SP2.csv&quot;     
+## [24] &quot;/tmp/RtmpxdkmxU/responsavel01_sp2.csv&quot;   
+## [25] &quot;/tmp/RtmpxdkmxU/responsavel02_sp2.csv&quot;   
+## [26] &quot;/tmp/RtmpxdkmxU/ResponsavelRenda_SP2.csv&quot;</code></pre>
 <p>Pronto. O shapefile está nomeado como “35SEE250GC_SIR.shp” e as variáveis tabulares de interesse estão nos seguintes arquivos (sim, é preciso ler o dicionário de variáveis):</p>
 <ul>
 <li><code>Pessoa03_SP.csv</code>
@@ -274,44 +300,44 @@ rm(nas, pontos, v)
 
 camadas</code></pre>
 <pre><code>## $raca
-## Simple feature collection with 12123 features and 2 fields
+## Simple feature collection with 12086 features and 2 fields
 ## geometry type:  POINT
 ## dimension:      XY
-## bbox:           xmin: 285434.2 ymin: 7296287 xmax: 307169.2 ymax: 7330478
+## bbox:           xmin: 285443.3 ymin: 7295754 xmax: 307151.4 ymax: 7330695
 ## epsg (SRID):    31983
 ## proj4string:    +proj=utm +zone=23 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
 ## First 10 features:
 ##         CD_GEOCODI categoria                 geometry
-## 1  353760205000001   Brancos POINT (297010.8 7308840)
-## 2  353760205000001   Brancos POINT (297351.2 7309128)
-## 3  353760205000001   Brancos POINT (297365.7 7308909)
-## 4  353760205000001   Brancos POINT (297592.4 7309000)
-## 5  353760205000001   Brancos POINT (297305.6 7308634)
-## 6  353760205000001   Brancos POINT (297378.7 7308735)
-## 7  353760205000001   Brancos POINT (297296.3 7308868)
-## 8  353760205000001   Brancos POINT (297364.5 7308965)
-## 9  353760205000001   Brancos POINT (297387.4 7308843)
-## 10 353760205000001   Brancos POINT (297408.1 7308989)
+## 1  353760205000001   Brancos POINT (297360.1 7308998)
+## 2  353760205000001   Brancos POINT (297393.3 7308714)
+## 3  353760205000001   Brancos POINT (297253.3 7308865)
+## 4  353760205000001   Brancos POINT (297167.7 7308978)
+## 5  353760205000001   Brancos POINT (297314.5 7308839)
+## 6  353760205000001   Brancos   POINT (297317 7309213)
+## 7  353760205000001   Brancos POINT (297354.5 7308958)
+## 8  353760205000001   Brancos POINT (297652.6 7309018)
+## 9  353760205000001   Brancos POINT (296996.9 7308825)
+## 10 353760205000001   Brancos POINT (297408.1 7309041)
 ## 
 ## $renda
-## Simple feature collection with 6263 features and 2 fields
+## Simple feature collection with 6181 features and 2 fields
 ## geometry type:  POINT
 ## dimension:      XY
-## bbox:           xmin: 285678.5 ymin: 7296972 xmax: 307237.9 ymax: 7330292
+## bbox:           xmin: 285515.7 ymin: 7296513 xmax: 306920.8 ymax: 7330286
 ## epsg (SRID):    31983
 ## proj4string:    +proj=utm +zone=23 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
 ## First 10 features:
 ##         CD_GEOCODI categoria                 geometry
-## 1  353760205000001  Classe A POINT (297559.8 7309100)
-## 2  353760205000001  Classe A POINT (297342.2 7308677)
-## 3  353760205000001  Classe A POINT (297281.6 7308805)
-## 4  353760205000001  Classe A POINT (297265.6 7308925)
-## 5  353760205000001  Classe A POINT (297465.7 7309034)
-## 6  353760205000002  Classe A POINT (297697.6 7308986)
-## 7  353760205000003  Classe A POINT (297221.8 7308453)
-## 8  353760205000004  Classe A POINT (297030.3 7308254)
-## 9  353760205000014  Classe A POINT (297030.3 7308254)
-## 10 353760205000005  Classe A POINT (296717.8 7308895)
+## 1  353760205000001  Classe A POINT (297156.5 7308927)
+## 2  353760205000001  Classe A POINT (297319.6 7309036)
+## 3  353760205000005  Classe A POINT (296755.2 7308705)
+## 4  353760205000007  Classe A POINT (296853.4 7309423)
+## 5  353760205000008  Classe A POINT (297394.4 7309465)
+## 6  353760205000008  Classe A POINT (297426.5 7309398)
+## 7  353760205000009  Classe A POINT (297282.1 7310019)
+## 8  353760205000009  Classe A POINT (297373.4 7309870)
+## 9  353760205000009  Classe A   POINT (297687 7309750)
+## 10 353760205000009  Classe A POINT (297624.6 7309765)
 ## 
 ## $setores
 ## Simple feature collection with 130 features and 11 fields
@@ -362,7 +388,7 @@ p &lt;- lapply(1:2, function(i) {
 })
 
 do.call(grid.arrange, c(p, ncol = 2))</code></pre>
-<p><img src="/post/2019-02-27-mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br_files/figure-html/unnamed-chunk-8-1.png" width="1152" style="display: block; margin: auto;" /></p>
+<p><img src="/post/2019-02-27-mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br_files/figure-html/unnamed-chunk-9-1.png" width="1152" style="display: block; margin: auto;" /></p>
 </div>
 <div id="mapas-dos-grupos-populacionais" class="section level3">
 <h3>Mapas dos grupos populacionais</h3>
@@ -379,7 +405,7 @@ do.call(grid.arrange, c(p, ncol = 2))</code></pre>
     )
 
 do.call(gridExtra::grid.arrange, c(p, nrow = 2))</code></pre>
-<p><img src="/post/2019-02-27-mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br_files/figure-html/unnamed-chunk-9-1.png" width="1152" style="display: block; margin: auto;" /></p>
-<p>E aí, depois de ver esses mapas, quais suas conclusões sobre a relação entre renda, raça e local de moradia na cidade de Peruíbe?</p>
+<p><img src="/post/2019-02-27-mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br_files/figure-html/unnamed-chunk-10-1.png" width="1152" style="display: block; margin: auto;" /></p>
+<p>Depois de ver esses mapas, o que você pensa sobre a relação entre renda, raça e local de moradia na cidade de Peruíbe?</p>
 </div>
 </div>

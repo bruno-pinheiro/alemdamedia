@@ -1,6 +1,6 @@
 ---
 title: "Mapas raciais de pontos no R com o pacote sf"
-subtitle: 'da obtenção dos dados até o mapa final'
+subtitle: 'Da obtenção dos dados até os mapas'
 author: Bruno Pinheiro
 date: '2019-02-27'
 slug: mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br
@@ -34,9 +34,11 @@ Para isto utilizarei os pacotes `sf` para manipular os dados espaciais e o `ggpl
 
 ## Mapas de pontos de contagem
 
+Criar um mapa de pontos é simples quando você já tem o layer de pontos. O que esta metodologia propõe é recriar representações espaciais dadas por polígonos em representações espaciais dadas por pontos, baseadas nas informações associadas aos polígonos.
+
 A ideia é simples: cada ponto representará uma quantidade n de observações (ex.: um ponto para cada indivíduo, para cada 10 etc) e eles serão distribuídos aleatoriamente dentro de polígonos espaciais aos quais estão associados.
 
-Exemplo. Quando faz o Censo o IBGE registra dados demográficos e socioeconômicos de toda a população brasileira e ada pessoa é registra no setor censitário de sua residência. O setores censitários são pequenas porções territoriais contíguas utlizadas para fins cadastrais e constituem a unidade básica de desagregação espacial do Censo.
+Exemplo. Quando faz o Censo o IBGE registra dados demográficos e socioeconômicos de toda a população brasileira e cada pessoa é registrada no setor censitário de sua residência. O setores censitários são pequenas porções territoriais contíguas utlizadas para fins cadastrais e constituem a unidade básica de desagregação espacial do Censo.
 
 Com estes dados construir um mapa de pontos significa distribuir aleatoriamente pontos representando pessoas em seus respectivos setores censitários.
 
@@ -52,13 +54,16 @@ Obter dados do IBGE, embora fácil, é uma tarefa dispendiosa. São muitos arqui
 
 Para facilitar esta tarefa eu criei algumas funções que facilitam a obtenção dos dados do IBGE diretamente no R, particularmente os dos resultados do universo e os dados espaciais. Elas fazem parte de um pacote chamado `seda`. Para construir os mapas não é necessário instalá-lo, basta ter os dados e você pode obtê-los nos links acima. Mas se você preferir seguir pelo caminho mais fácil:
 
+```{r, eval = FALSE}
+# para instalar o pacote seda
+devtools::install_github("bruno-pinheiro/seda")
+```
+
 **Obs.:** o pacote `seda` foi testado apenas em linux Debian 9
 
 ```{r}
-## para instalar o pacote
-# devtools::install_github("bruno-pinheiro/seda")
+# carregar pacotes
 library(seda)
-# outros pacotes
 library(sf)
 library(dplyr)
 library(tidyr)
@@ -288,6 +293,5 @@ p <- lapply(1:2, function(i)
 do.call(gridExtra::grid.arrange, c(p, nrow = 2))
 ```
 
-
-E aí, depois de ver esses mapas, quais suas conclusões sobre a relação entre renda, raça e local de moradia na cidade de Peruíbe?
+Depois de ver esses mapas, o que você pensa sobre a relação entre renda, raça e local de moradia na cidade de Peruíbe?
 
