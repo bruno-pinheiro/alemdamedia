@@ -3,16 +3,15 @@ theme = "beautifulhugo"
 baseurl = "https://alemdamedia.netlify.com/"
 DefaultContentLanguage = "pt-br"
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
+metaDataFormat = "yaml"
 
+pygmentsUseClasses = false
 pygmentsUseClassic = false
-pygmentsUseClasses = true
-pygmentsCodeFences = true
+pygmentsCodefences = true
+PygmentsStyle = "monokai"
 
-[params]
-  useChroma = true
-  disqusShortname = "alemdamedia"
-  googleAnalytics = "UA-134237576-1"
-  # custom_css = "css/custom.css"
+#[params.assets]
+#  customCSS = ["css/syntax.css"]
 
 [Params]
 #  homeTitle = "Além da média" # Set a different text for the header on the home page
@@ -26,11 +25,14 @@ pygmentsCodeFences = true
   comments = true
   readingTime = true
   wordCount = true
-  useHLJS = true
   socialShare = true
   delayDisqus = true
   showRelatedPosts = true
   gcse = "000226989137327763666:kjdmisjkkx8" # Get your code from google.com/cse. Make sure to go to "Look and Feel" and change Layout to "Full Width" and Theme to "Classic"
+  disqusShortname = "alemdamedia"
+  googleAnalytics = "UA-134237576-1"
+  useHLJS = true
+  useChroma = false
 
 #[[Params.bigimg]]
 #  src = "img/triangle.jpg"
@@ -47,7 +49,7 @@ pygmentsCodeFences = true
 [Author]
   name = "Bruno Pinheiro de Oliveira"
   website = "alemdamedia.netlify.com"
-  email = "bruno.lahunmen@gmail.com"
+  email = "brunopinheiro.net@gmail.com"
   github = "bruno-pinheiro"
   gitlab = "bruno-pinheiro"
   stackoverflow = "users/7636176/bruno-pinheiro"
