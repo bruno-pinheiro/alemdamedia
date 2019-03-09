@@ -78,9 +78,3 @@ posts:
   requiredFields: ["title", "body"]
   transforms:
     body: "frontmatterContent"
-
-
-  reCaptcha:
-    enabled: true
-    siteKey: "6LcgjZYUAAAAAJt0n7cXGsvcCZz1xFDrtZqqnr"
-    secret: "6LcgjZYUAAAAAMmHbyABZr1oNRSMug2uyTiosI8K"
