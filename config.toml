@@ -29,7 +29,7 @@ PygmentsStyle = "monokai"
   delayDisqus = true
   showRelatedPosts = true
   gcse = "000226989137327763666:kjdmisjkkx8" # Get your code from google.com/cse. Make sure to go to "Look and Feel" and change Layout to "Full Width" and Theme to "Classic"
-  disqusShortname = "alemdamedia"
+  # disqusShortname = "alemdamedia"
   googleAnalytics = "UA-134237576-1"
   useHLJS = true
   useChroma = false
@@ -69,4 +69,10 @@ PygmentsStyle = "monokai"
     url = "page/sobre/"
     weight = 3
 
+# Staticman support
+[Params.staticman]
+  api = "https://dev.staticman.net/v3/entry/github/bruno-pinheiro/alemdamedia/master/comments"
+[Params.staticman.recaptcha]
+  sitekey = "6LcgjZYUAAAAAJt0n7cXGsvcCZz1xFDrtZqqnr"
+  secret = "PkfMa/imMREzO6Jl12u2Z808E5WfW12mJzbx2I6I+WpxbPC12395G3iFK8qx1GOOIInjaK08qNc+61atgpkjmFKJBD7mKFppgfxJ+Xeeepa3zZGZ6eyYF1DxMryIzN8fRX3vr4C9beoJQ9h9MMQR77zITFiKE2V4faLsFp/hLSI="
 
