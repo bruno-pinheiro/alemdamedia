@@ -1,7 +1,7 @@
 title = "Além da Média"
 theme = "beautifulhugo"
 baseurl = "https://alemdamedia.netlify.com/"
-DefaultContentLanguage = "pt"
+DefaultContentLanguage = "br"
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 metaDataFormat = "yaml"
 
