@@ -12,34 +12,33 @@ bigimg: [{src: "/img/mapa_brasil_capa.png"}]
 ---
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set(warning = FALSE,
-                      error = FALSE,
-                      message = FALSE,
-                      cache = TRUE)
+knitr::opts_chunk$set(warning = FALSE, error = FALSE,
+                      message = FALSE, cache = TRUE)
 ```
 
-Há cerca de dois anos um amigo (o [Carlos Diego](https://twitter.com/omtuttare)) me chamou não lembro em qual *chat* e mostrou o trabalho da geógrafa [Fejetlenfej](https://imgur.com/gallery/N4cUA), que produziu mapas colorindo as bacias hidrográficas dos EUA, criando um efeito belíssimo.
+Há cerca de dois anos um amigo (o [Carlos Diego](https://twitter.com/omtuttare)) me chamou não lembro em qual *chat* e mostrou o trabalho da geógrafa [Fejetlenfej](https://imgur.com/gallery/N4cUA). Ela produziu mapas colorindo as bacias hidrográficas dos EUA, criando um efeito belíssimo.
 
-Antropólogo e mestrando em gestão e regulação de recursos hídricos, ele viu naqueles mapas uma forma de diferente e sensível de explicitar a importância dos rios em nossa relação com o espaço e os territórios. Resolvemos então reproduzir a ideia usando dados da hidrografia brasileira.
+Antropólogo e mestrando em gestão e regulação de recursos hídricos, ele viu naqueles mapas uma forma diferente e sensível de explicitar a importância dos rios em nossa relação com o espaço e os territórios. Resolvemos então reproduzir a ideia usando dados da hidrografia brasileira.
 
 Com um certo trabalho, na época fizemos os mapas no QGIS. Depois o Diego publicou na plataforma [aguas.ml](https://aguas.ml/as-veias-do-brasil-arco-iris-das-bacias-hidrograficas-da-ana/) e logo em seguida no [Archdaily Brasil](https://www.archdaily.com.br/br/802719/as-veias-do-brasil-arco-iris-das-bacias-hidrograficas-do-territorio-nacional), onde por muitos dias foi a publicação mais acessada do site.
 
-Muita gente perguntou como fazê-los, mas a reprodutibilidade não é um forte do QGIS. De lá para cá eu incorporei minhas habilidades em visualização de dados e há um bom tempo eu quero parar e fazer estes mapas no R. Fiz isto alguns dias atrás (há coisas que fazemos por diversão). Agora eu explico neste tutorial como criar este arco-íris das veias brasileiras de forma programática no R, usando dados abertos disponibilizados pela [Agência Nacional de Águas (ANA)](http://ana.gov.br/).
+Muita gente perguntou como fazê-los, mas a reprodutibilidade não é um forte do QGIS. De lá para cá eu incorporei minhas habilidades em visualização de dados e há um bom tempo quero parar e fazer estes mapas no R. Alguns dias atrás parei e fiz isto (há coisas que fazemos por diversão).
 
+Agora eu explico neste tutorial como criar este arco-íris das veias brasileiras usando dados abertos disponibilizados pela [Agência Nacional de Águas (ANA)](http://ana.gov.br/) e de forma programática. Se voce copirar esse .Rmd e rodar no seu computador, replicará todo o processo! Com algumas alterações, você poderá criar mapas de variadas escalas e destacar os rios de lugares diferentes.
 
 ## Obter os dados
 
-Para começar é preciso obter os dados. Para a produção dos mapas utilizaremos duas bases de dados em formato *shapefile*.
+Para começar é preciso obter os dados. Utilizaremos duas bases de dados em formato *shapefile*.
+
+A primeira delas contem a geolocalização dos cursos d'água do território nacional, representados geometricamente por linhas. Embora já exista a versão de 2017, mais recente, utilizaremos a base de 2013, que é muito mais leve.
 
 - [Cursos D'Água da Base Hidrográfica Ottocodificada Multiescalas 2013](http://metadados.ana.gov.br/geonetwork/srv/pt/metadata.show?id=267&currTab=distribution)
 
-A primeira delas contem a geolocalização dos cursos d'água do território nacional, representados geometricamente por linhas. Embora já exista a versão de 2017, mais recente, utilizaremos a base de 2013, pelo tamanho do arquivo que precisará ser baixado.
+A segunda base tem a geometria poligonal das regiões hidrográficas brasileiras. A necessidade desta base ficará clara mais abaixo.
 
 - [Regiões hidrográficas do Brasil](http://metadados.ana.gov.br/geonetwork/srv/pt/metadata.show?id=92&currTab=distribution)
 
-A segunda base contem a geometria poligonal das regiões hidrográficas brasileiras. A necessidade desta base ficará clara mais abaixo.
-
-Então vamos baixar os dados:
+Então, vou baixar os dados:
 
 ```{r}
 # baixar shapefile de cursos d'água
@@ -65,93 +64,128 @@ if (!file.exists(dir)) {
 }
 ```
 
-O código abaixo realiza o download do arquivo zipado, o descompacta e guarda os arquivos extraídos em um diretório chamado `data-raw/geoft_bho`, localizado na raiz do seu diretório de trabalho.
+O código axima realizou o download do arquivo zipado, descompactou e guardou os arquivos extraídos em um diretório chamado `data-raw/geoft_bho`, localizado na raiz do seu diretório de trabalho.
 
 ## Carregar pacotes e importar dados
 
-Após baixar os dados já é possível carregar os dados. Mas antes vamos carregar os pacotes que serão utilizados.
+Após baixar os dados já é possível importá-los no ambiente do R. Antes vamos carregar os pacotes que serão utilizados.
 
 - `sf`: as operações com os dados espaciais serão feitas com o pacote `sf`, que implementa o padrão [simple features](https://r-spatial.github.io/sf/articles/sf1.html) no R.
 
-- `dplyr`: manipulação de dados não espaciais
+- `dplyr`: para manipulação de dados não espaciais
 
 - `ggplot2`: para a criação dos mapas
 
-- `stringr`: para construir o título dos gráficos
+- `stringr`: para a manipulação de strings
 
-Caso não tenha estes pacotes instalados, rode as linhas de código a seguir.
+- `purrr`: para plotar os mapas das RHI em looping
+
+Caso não tenha os pacotes instalados, rode as linhas de código a seguir. Se já tem, pode pular o passo abaixo e seguir adiante:
 
 ```{r, eval = FALSE}
 # instalar pacotes
 install.packages("sf")
 install.packages("tidyverse") # dplyr, ggplot2, stringr e outros
+devtools::install_github("bruno-pinheiro/seda")
 ```
 
-Se já tem, pode pular o passo acima e seguir adiante:
+E agora vamos carregar os pacotes:
 
 ```{r}
 # carregar pacotes
 library(sf)
 library(tidyverse) # dplyr, ggplot2, stringr e outros
-library(seda) # tema para os mapas
+library(seda)
 ```
 
-Com os pacotes carregados, já podemos importar os dados e proceder com a construção dos mapas.
+O próximo passo é importar os dados.
 
 ```{r}
 # Importar os dados
 cursos <- read_sf(dsn = "data-raw/geoft_bho", layer = "geoft_bho_cursodagua")
 regioes <- read_sf(dsn = "data-raw/SNIRH_regioes_hidrograficas",
                    layer = "SNIRH_RegioesHidrograficas")
-cursos
-regioes
 ```
 
-Ao todo o objeto `cursos` tem mais de 310 mil linhas representado os cursos d'água do Brasil, e um conjunto de 12 atributos não espaciais a respeito deles. Não há, porém, uma variável indicando a qual região hidrográfica o rio pertence. 
+Os dados já estão disponíveis no ambiente de trabalho. Vamos dar uma olhada rapidamente neles, para saber com o que estamos lidando:
 
-É para isto que serverá o objeto `regioes`, que tem os 12 polígonos das regiões hidrográficas e 6 variáveis, sendo de nosso interesse `RHI_CD` e `RHI_NM` (respectivamente código e nome da região).
+```{r}
+head(cursos)
+```
 
-Antes de avançar, vamos limpar as variáveis que não serão usadas e ajustar a projeção, as duas bases estão configuradas com um sistema de referências de coordenadas *latlong*, então vamos transformar a projeção para UTM, particularmente o CRS Sirgas 2000 / UTM zone 23, cujo código EPSG é [31983](http://spatialreference.org/ref/epsg/31983/).
+
+Ao todo o objeto `cursos` tem mais de 310 mil linhas representado os cursos d'água do Brasil e um conjunto de 12 atributos não espaciais a respeito deles. Não há, porém, uma variável indicando a qual região hidrográfica o rio pertence. 
+
+```{r}
+head(regioes)
+```
+
+É para isto que servirá o objeto `regioes`. Nele constam os 12 polígonos das regiões hidrográficas e 6 variáveis, sendo de nosso interesse `RHI_CD` e `RHI_NM` (respectivamente código e nome da região).
+
+## Preparar os dados
+
+### Limpar variáveis e reprojetar
+
+Antes de avançar, vamos limpar as variáveis que não serão usadas e ajustar a projeção. As duas bases estão configuradas com um sistema de referências de coordenadas *latlong*, então transformarei a projeção para UTM, particularmente o CRS Sirgas 2000 / UTM zone 23, cujo código EPSG é [31983](http://spatialreference.org/ref/epsg/31983/).
 
 ```{r}
 cursos <- cursos %>% select(COCURSODAG, NUCOMPCDA) %>% st_transform(31983)
 regioes <- regioes %>% select(RHI_NM, RHI_CD) %>% st_transform(31983)
-
-cursos
-regioes
 ```
 
-Já não há mais variáveis inúteis para a nossa finalidade, mas ainda é preciso realizar um último passo. O pacote `sf` lida melhor com projeços UTM, por isso se os dados estiverem representado por alguma projeção em formato *latlong* será preciso reprojetá-los.
+Podemos conferir a nova projeção definida com `st_crs()`:
 
-E para finalizar esta parte, um plot para visualizar rapidamente os dados.
+```{r}
+st_crs(cursos)
+st_crs(regioes)
+```
+
+Tudo ok. Tanto a projeção está correta, como os dois objetos têm o mesmo CRS. Posso seguir adiante.
+
+Agora, vou criar um plot dos rios com mais de 100km de comprimento, para visualizar rapidamente os dados.
 
 ```{r, fig.width=12, fig.height=8}
 plot(st_geometry(cursos[cursos$NUCOMPCDA > 100, ]), col = "blue", lwd = 0.2)
 plot(st_geometry(regioes), add = TRUE)
 ```
 
+Aí estão os nossos dados: os cursos d'água e os polígonos.
+
+Para concluir a etapa de preparação ainda é preciso identificar a região hidrográfica a que cada rio pertence.
+
 ## Identificar RHI dos cursos d'água
 
-Conforme já comentei acima, a base de cursos d'água não identifica a RHI de cada curso. Como o objetivo é colorir os rios de acordo com a região, esta é uma etapa importante do procedimento.
+Conforme comentei acima a base de cursos d'água não identifica a RHI de cada curso. Como o objetivo é colorir os rios de acordo com a região, esta é uma etapa importante do procedimento.
 
-A identificação pode ser feita a partir de uma operação de intersecção entre os cursos d'água e as regiões. Isto é, perguntaremos ao R em qual polígono de região estão as linhas dos cursos d'água.
+A identificação será feita com uma operação de intersecção. Isto é, perguntarei ao R em qual polígono de região as linhas dos cursos d'água estão. Usando em conjunto as funções `st_join()` e `st_intersects()` do pacote `sf` é possível realizar esta operação. Trabalharei apenas com os cursos d'água com comprimento igual ou maior que 15 km. Além de ser o suficiente para não poluir a visualização, levará menos tempo para processar.
 
-Usando em conjunto as funções `st_join()` e `st_intersects()` do pacote `sf` é possível realizar esta operação. Trabalharemos apenas com os cursos d'água com cumprimento a partir de 15 km. Além de ser o suficiente para não poluir a visualização, ainda demanda menos tempo. Ainda assim, esta etapa dura alguns minutos de processamento.
+Ainda assim, a intersecção envolverá milhares de cursos d'água e, por isso, esta etapa dura alguns minutos de processamento.
 
-Talvez valha a pena rodar o código e parar para tomar um café ;)
+Talvez valha a pena rodar o código e parar para tomar um café. ;)
 
 ```{r, eval=FALSE}
 # Etapa 1
 ## Identificar RHI de cada cursos d'água
 cursos <- cursos %>%
   filter(NUCOMPCDA >= 15) %>% 
-  st_join(regioes %>% select(RHI_NM, RHI_CD),
-          join = st_intersects)
+  st_join(regioes %>% select(RHI_NM, RHI_CD), join = st_intersects)
+
+head(cursos)
 ```
 
-Quando o assunto é análise espacial sempre há um nível de incerteza, de modo que operação realizada no passo anterior era vulnerável a possíveis inconsistências entre as duas bases.
+A operação realizada no passo anterior adicionou na base de cursos as colunas `RHI_CD` e `RHI_NM` e agora sabemos a qual região cada rio pertence.
 
-Os casos em que que a linha representando o rio cruza as bordas de um polígono identificou duas regiões para o rio, então ele está duplicada na base `cursos`. Por isso, além da etapa acima realizarei uma segunda etapa para corrigir esses erros. 
+Mas há erros. A operação era vulnerável a possíveis inconsistências entre as duas bases.
+
+Os limites de bacias hidrográficas são dados pela parte mais alta do relevo, então ao menos em tese um rio não deveria cruzar de uma região hidrográfica para outras. Por inconsistências na geometria das duas bases de dados, há casos em que isso ocorre. Quando uma linha, representando um rio, cruza as bordas de um polígono, ela é identificada como pertencendo a mais de uma região. Estes rios agora estão duplicados na base `cursos`, com uma região correta e outra errada.
+
+```{r}
+cursos %>% filter(duplicated(COCURSODAG)) %>% dim()
+```
+
+Eu poderia simplesmente excluir as observações com em que a RHI está errada e deixar apenas aquelas com o valor correto. Mas eu precisaria saber quais rios estão duplicados e quais a regiões corretas de cada um deles e levantar essas informações daria muito trabalho.
+
+Para resolver este problema eu farei uma intersecção dos polígonos com os centroides dos rios duplicados. Provavelmente haverá um outro caso que não será corrigido após este procedimento, mas se forem poucos, não haverá importância, já que nosso objetivo é estético.
 
 ```{r, eval = FALSE}
 # Etapa 2
@@ -187,17 +221,17 @@ cursos <- read_sf(dsn = "data-raw/veias_viz", layer = "veias_viz15")
 ```
 
 ```{r}
-cursos
+head(cursos)
 ```
 
 Restaram na base 32.695 observações. Além do código e do cumprimento do curso d'água, a base agora tem também duas novas variáveis identificando a região hidrográfica, criadas a partir da intersecção com os polígonos das regiões.
 
 ## Plotar os mapas
 
-O fundo do mapa será todo preto e o `ggplot2` não tem nenhum tema embutido assim. Para obter o layout desejado sem repetir código, criaremos a função abaixo a partir do tema `theme_minimal()` e a reutilizaremos em todos os mapas.
+Para plotar os mapas eu usarei um fundo preto, mas o `ggplot2` não tem nenhum tema embutido assim. Para obter o layout desejado sem repetir código, vou usar a função `theme_set()` do `ggplot2` para definir um tema padrão a partir de `dark_map_theme()`, que está no pacote `seda`.
 
 ```{r}
-# Definir o tema utiliado na criação dos gráficos
+# Definir o tema utilizado na criação dos gráficos
 theme_set(
   dark_map_theme() +
     theme(panel.background = element_rect(fill = 'black', colour = NA),
@@ -210,46 +244,64 @@ cores <- rainbow(12, s = .4, v = 1)
 cores
 ```
 
+Agora o tema será automaticamente aplicado a todos os gráficos (mapas) gerados a seguir. Eu também já defini uma paleta com 12 cores da escala arco-íris, que serão usadas para colorir as regiões hidrográficas.
+
+```{r}
+cores
+```
+
+
 ### Mapa do Brasil
 
 Agora é parte mais fácil. Com o `ggplot2` é relativamente simples plotar objetos *simple features*.
 
 ```{r, fig.width=12, fig.height=8}
 # criar o mapa do Brasil
-ggplot() +
-  geom_sf(data = cursos %>% filter(NUCOMPCDA > 40),
-          aes(colour = RHI_NM, size = NUCOMPCDA, alpha = NUCOMPCDA)) +
+ggplot(cursos %>% filter(NUCOMPCDA > 40)) +
+  geom_sf(aes(colour = RHI_NM, size = NUCOMPCDA, alpha = NUCOMPCDA)) +
   scale_colour_manual(values = cores) +
   scale_size_continuous(range = c(.1, 1))
 ```
 
-Para criar o efeito visual de relevo a partir dos rios, defini o tamanho e a transparência do curso d'água com base no cumprimento do mesmo, dado pela variável `NUCOMPCDA`. Além disso, determinei que o tamanho das linhas deveria seguir um intervalo de 0.1 (para os menores rios) até 1 (para os maiores).
+Pronto, isso era tudo o que precisava para criar este bonito mapa hídrico do território brasileiro contendo os cursos d'água com mais de 40 km de comprimento.
+
+Para criar o efeito visual de relevo bastam definir: 
+
+- a largura e a transparência da linha a partir do comprimento do rio, dado pela variável `NUCOMPCDA`.
+
+- que as linhas deverão ter largura em um intervalo de 0.1 para os menores rios até 1 para os maiores rios (este valor talvez precise ser adequado dependendo da escala dos mapas ou tamanho do arquivo gerado).
+
+Com estas definições, basicamente, quanto maior o rio, mais largo ele é representado e mais visível ele fica.
 
 ### Mapas das regiões hidrográficas
 
-Já a criação dos mapas das regiões é uma tarefa repetitiva. Para não repetir o código acima 12 vezes criei uma função que replica a criação do mapa feita acima, com a adaptação de filtrar uma região antes de gerar o mapa, além de selecionar uma das cores da paleta e o nome da região, que será utilizado no título.
+Já a criação dos mapas das regiões é uma tarefa repetitiva. São 12 mapas.
+
+Para não repetir o código usado acima 12 vezes criei uma função customizada `plot_regioes()` para replicar o procedimento usando a função `map` do pacote `purr` (parte do `tidyverse`), que é uma alternativa ao `lapply()`/`sapply()`. A diferença é que antes de gerar o mapa a função filtrará uma região, usará seu nome no título e aplicará uma das cores da paleta `cores`.
 
 ```{r}
-## Criar os mapas de todas as regiões hidrográficas e salvar
+## Criar os mapas de todas as regiões hidrográficas
 plot_regioes <- function(codigo) {
-  cor <- cores[codigo]
-  regiao <- unique(cursos$RHI_NM[cursos$RHI_CD == codigo])
+  cor <- cores[codigo] # selecionar a cor
+  regiao <- unique(cursos$RHI_NM[cursos$RHI_CD == codigo]) # selecionar a regiao
   return(
-    cursos %>%
-      filter(RHI_CD == codigo) %>% 
-      ggplot() +
+    ggplot(cursos %>% filter(RHI_CD == codigo)) +
       geom_sf(aes(colour = cor, size = NUCOMPCDA, alpha = NUCOMPCDA)) +
       scale_colour_manual(values = cor) +
       scale_size_continuous(range = c(.1, 1)) +
       labs(title = "", subtitle = paste("RHI", str_to_title((regiao))))
-  )
+    )
 }
+```
 
-lapply(1:12, function(x) {
-  plot_regioes(x)
-  })
+Eu agora aplicarei a função `plot_regioes` em looping, usando a função `map`.
+
+```{r}
+map(1:12, ~plot_regioes(.))
 ```
 
 E pronto! Os mapas estão todos criados!
 
-Algum comentário? Sugestão? Escreva-nos!
+Algumas melhorias poderiam ser feitas, como corrigir a densidade de cursos d'água de algumas regiões, para melhorar o efeito visual. Mas o objetivo aqui é só apresentar o procedimento de produção dos mapas e isso já dá conta.
+
+Espero que este material seja útil para você de alguma forma e, caso tenha dúvidas ou sugestões, deixe seu recado!
