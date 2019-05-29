@@ -80,7 +80,9 @@ Após baixar os dados já é possível importá-los no ambiente do R. Antes vamo
 
 - `purrr`: para plotar os mapas das RHI em looping
 
-Caso não tenha os pacotes instalados, rode as linhas de código a seguir. Se já tem, pode pular o passo abaixo e seguir adiante:
+Caso não tenha os pacotes instalados, é preciso instalar.
+
+As linhas de código a seguir dão conta de instalar todos os pacotes necessários.
 
 ```{r, eval = FALSE}
 # instalar pacotes
