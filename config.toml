@@ -1,7 +1,7 @@
 title = "Além da Média"
 theme = "beautifulhugo"
 baseurl = "https://alemdamedia.netlify.com/"
-DefaultContentLanguage = "pt-br"
+DefaultContentLanguage = "br"
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 metaDataFormat = "yaml"
 
@@ -20,7 +20,7 @@ PygmentsStyle = "monokai"
   favicon = "img/favicon.ico"
   dateFormat = "02/01/2006"
   shortdateFormat = "02/Jan/2006 15:04:05"
-  commit = false
+  commit = true
   rss = true
   comments = true
   readingTime = true
@@ -29,7 +29,6 @@ PygmentsStyle = "monokai"
   delayDisqus = true
   showRelatedPosts = true
   gcse = "000226989137327763666:kjdmisjkkx8" # Get your code from google.com/cse. Make sure to go to "Look and Feel" and change Layout to "Full Width" and Theme to "Classic"
-  disqusShortname = "alemdamedia"
   googleAnalytics = "UA-134237576-1"
   useHLJS = true
   useChroma = false
@@ -60,13 +59,29 @@ PygmentsStyle = "monokai"
     weight = 1
 
 [[menu.main]]
+    name = "Aprenda"
+    url = "aprenda"
+    weight = 2
+
+[[menu.main]]
+    name = "Categorias"
+    url = "category"
+    weight = 3
+
+[[menu.main]]
     name = "Tags"
     url = "tags"
-    weight = 2
+    weight = 4
     
 [[menu.main]]
     name = "Sobre"
     url = "page/sobre/"
-    weight = 3
+    weight = 5
 
+# Staticman support
+[Params.staticman]
+  api = "https://dev.staticman.net/v3/entry/github/bruno-pinheiro/alemdamedia/master/comments"
+[Params.staticman.recaptcha]
+  sitekey = "6LcgjZYUAAAAAJt0n7cXGsvcCZz1xFDrtZqqnr"
+  secret = "PkfMa/imMREzO6Jl12u2Z808E5WfW12mJzbx2I6I+WpxbPC12395G3iFK8qx1GOOIInjaK08qNc+61atgpkjmFKJBD7mKFppgfxJ+Xeeepa3zZGZ6eyYF1DxMryIzN8fRX3vr4C9beoJQ9h9MMQR77zITFiKE2V4faLsFp/hLSI="
 
