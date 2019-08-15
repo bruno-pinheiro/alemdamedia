@@ -5,7 +5,9 @@
 
 blogdown/
 public/
-content/post/data*
+content/post/data
+content/post/data-raw
 content/post/graphs
 content/post/scripts
 
+*cache
