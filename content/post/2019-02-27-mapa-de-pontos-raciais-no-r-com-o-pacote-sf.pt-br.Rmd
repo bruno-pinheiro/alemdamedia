@@ -69,6 +69,7 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(gridExtra)
+library(data.table)
 ```
 
 Quero a malha de setores censitários e as seguintes variáveis populacionais:
@@ -80,7 +81,7 @@ Como a análise envolve renda, trabalharei apenas com dados a respeito de pessoa
 
 Usando o pacote `seda` vou baixar e importar o shapefile de setores censitários do estado de São Paulo. Esta etapa demorará um pouco, pois os dados são pesados. Dependendo da sua conexão, dá tempo de pegar (ou tomar) um café.
 
-```{r, cache=TRUE}
+```{r, cache=FALSE}
 # malha de setores
 url <- "ftp://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_de_setores_censitarios__divisoes_intramunicipais/censo_2010/setores_censitarios_shp/sp/sp_setores_censitarios.zip"
 get_ibge(url)
@@ -123,11 +124,15 @@ Então já posso importar os dados:
 # importar dados em lista
 camadas <- list(
     # raca
-  raca = read_ibge("Pessoa03_SP.csv") %>% select(Cod_setor, V002:V006),
+  raca = fread(list_tmp("Pessoa03_SP.csv"),
+               sep = ";", encoding = "Latin-1") %>%
+    select(Cod_setor, V002:V006),
   # renda
-  renda = read_ibge("PessoaRenda_SP2.csv") %>% select(Cod_setor, V001:V009),
+  renda = fread(list_tmp("PessoaRenda_SP2.csv"),
+                sep = ";", encoding = "Latin-1") %>%
+    select(Cod_setor, V001:V009),
   # setores censitários
-  setores = read_geoibge("35SEE250GC_SIR")
+  setores = read_sf(dsn=list_tmp("shp"), options = "ENCODING=Latin1")
   )
 camadas
 ```
@@ -143,15 +148,15 @@ O próximo passo é preparar os dados.
 Farei o filtro e a limpeza das observações e variáveis que não serão utilizadas, além dos tratamentos necessários. Ao fim quero ter as seguintes variáveis na base de setores censitários:
 
 - **raca**: brancos, pretos, amarelos, pardos, indigenas
-- **renda**: classeA, classeB, classeC, classeD, classeE
+- **renda**: sm10mais, sm10, sm5, sm2, sm1
 
 Com relação à renda, vale destacar que as faixas de renda são baseadas em salários mínimos e que em 2010 o salário mínimo era de R\$ 510. Especificamente, as faixas de renda serão:
 
-- classeA: > 10 salários mínimos
-- classeB: 5 a 10 salários mínimos
-- classeC: 2 a 5 salários mínimos
-- classeD: 1 a 2 salários mínimos
-- classeE: até 1 salário mínimo
+- sm10mais: > 10 salários mínimos
+- sm10: 5 a 10 salários mínimos
+- sm5: 2 a 5 salários mínimos
+- sm2: 1 a 2 salários mínimos
+- sm1: até 1 salário mínimo
 
 ```{r}
 # filtrar setores censitários de Peruíbe
@@ -161,34 +166,56 @@ camadas$setores <- camadas$setores %>%
 
 # manipular variáveis de raça e renda
 camadas$raca <- camadas$raca %>%  
-  filter(Cod_setor %in% camadas$setores$CD_GEOCODI) %>% 
   mutate(Cod_setor = as.character(Cod_setor)) %>% 
+  filter(Cod_setor %in% camadas$setores$CD_GEOCODI) %>% 
   mutate_at(vars(-Cod_setor), as.numeric) %>% 
   rename(CD_GEOCODI = Cod_setor, brancos = V002, pretos = V003,
          amarelos = V004, pardos = V005, indigenas = V006)
 
 camadas$renda <- camadas$renda %>%  
-      filter(Cod_setor %in% camadas$setores$CD_GEOCODI) %>% 
-      mutate(Cod_setor = as.character(Cod_setor)) %>% 
-      mutate_at(vars(-Cod_setor), as.numeric) %>% 
-  mutate(classeE = V001 + V002,
-         classeC = V004 + V005,
-         classeA = V007 + V008 + V009) %>% 
-  select(CD_GEOCODI = Cod_setor, classeA, classeB = V006,
-         classeC, classeD = V003, classeE)
+  mutate(Cod_setor = as.character(Cod_setor)) %>% 
+  filter(Cod_setor %in% camadas$setores$CD_GEOCODI) %>% 
+  mutate_at(vars(-Cod_setor), as.numeric) %>% 
+  mutate(sm1 = V001 + V002,
+         sm5 = V004 + V005,
+         sm10mais = V007 + V008 + V009) %>% 
+  select(CD_GEOCODI = Cod_setor, sm10mais, sm10 = V006,
+         sm5, sm2 = V003, sm1)
 
 # mesclar dados de raça e renda na malha de setores
 camadas$setores <- camadas$setores %>% 
-  select(CD_GEOCODI) %>% 
-  left_join(camadas$raca, by = "CD_GEOCODI") %>% 
+  select(CD_GEOCODI) %>%
+  left_join(camadas$raca, by = "CD_GEOCODI") %>%
   left_join(camadas$renda, by = "CD_GEOCODI") %>%
-  arrange(CD_GEOCODI)
+  arrange(CD_GEOCODI) %>%
+  st_transform(31983) %>%
+  select(1, 3:12, 2)
 
 # checar dados
-camadas$setores
+glimpse(camadas$setores)
 ```
 
 Aí está a variável de identificação do setor censitário reunida às 10 variáveis que indicam o número de pessoas de cada grupo populacional em cada setor censitário.
+
+### Visualizar
+
+E assim estão os dados até este instante.
+
+```{r, fig.width=10, fig.height=4}
+plot(camadas$setores[, 2:6],
+     key.pos = 1,
+     key.width = lcm(1.3),
+     key.length = 1.0,
+     title = "Distribuição da população pela cidade, por raça")
+```
+
+```{r, fig.width=10, fig.height=4}
+plot(camadas$setores[, 7:11],
+     key.pos = 1,
+     key.width = lcm(1.3),
+     key.length = 1.0,
+     main = "Distribuição da população pela cidade, por nível de renda")
+```
 
 ## Passo 3: Processamento espacial
 
@@ -215,22 +242,25 @@ E por fim reagruparei os pontos representando a distribuição espacial da popul
 
 É necessário repetir este procedimento para cada um dos grupos, isto é, 10 vezes. Aplicando a função `lapply()` o processo é feito em *looping*, os objetos são estocando numa lista e evita-se repetição de código.
 
-```{r, cache=TRUE}
+```{r}
 # separar dados missing
 nas <- camadas$setores[is.na(camadas$setores$brancos), ]
 camadas$setores <- camadas$setores[!is.na(camadas$setores$brancos), ]
 
 # separar nomes das variáveis
-v <- names(as_tibble(camadas$setores)[, 2:11])
+variaveis <- names(as_tibble(camadas$setores)[, 2:11])
 grupos <- c("Brancos", "Pretos", "Amarelos", "Pardos", "Indígenas",
-            "Classe A", "Classe B", "Classe C", "Classe D", "Classe E")
+            "SM10+", "SM10", "SM5", "SM2", "SM1")
+```
 
+```{r, cache=TRUE}
 # realizar a atribuição dos pontos para cada grupo populacional
 pontos <- lapply(1:10, function(i) {
-    st_sample(camadas$setores, round(camadas$setores[, v[i]][[v[i]]]) / 5) %>% 
-      st_sf() %>% 
-      st_join(camadas$setores %>% select(CD_GEOCODI), join = st_intersects) %>%
-      mutate(categoria = grupos[i])
+  n_pontos <- round(camadas$setores[, variaveis[i]][[variaveis[i]]] / 5)
+  st_sample(camadas$setores, n_pontos) %>% 
+    st_sf() %>% 
+    st_join(camadas$setores %>% select(CD_GEOCODI), join = st_intersects) %>%
+    mutate(categoria = grupos[i])
 })
 
 # unir grupos de faixa e renda

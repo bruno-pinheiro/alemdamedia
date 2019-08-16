@@ -192,7 +192,7 @@ cidades_borda100 &lt;- st_join(
   geom_sf(aes(fill = Raio_borda), lwd = .1) +
   labs(title = &quot;Raios de influência de Piracicaba&quot;,
        subtitle = &quot;A partir das bordas&quot;) +
-  asha::theme_map() +
+  seda::light_map_theme() +
   theme(legend.position = &quot;bottom&quot;)
 p1</code></pre>
 <p><img src="/post/2018-10-25-como-identificar-raios-de-influencia-de-cidades_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
@@ -303,7 +303,7 @@ cidades_centroide100 &lt;- st_join(
   geom_sf(aes(fill = Raio_centroide), lwd = .1) +
   labs(title = &quot;Raios de influência de Piracicaba&quot;,
        subtitle = &quot;A partir do centroide&quot;) +
-  asha::theme_map() +
+  seda::light_map_theme() +
   theme(legend.position = &quot;bottom&quot;)
 p2</code></pre>
 <p><img src="/post/2018-10-25-como-identificar-raios-de-influencia-de-cidades_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>

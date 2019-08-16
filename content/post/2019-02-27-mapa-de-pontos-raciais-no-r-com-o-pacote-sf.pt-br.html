@@ -46,7 +46,8 @@ library(sf)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(gridExtra)</code></pre>
+library(gridExtra)
+library(data.table)</code></pre>
 <p>Quero a malha de setores censitários e as seguintes variáveis populacionais:</p>
 <ul>
 <li>número de habitantes nos setores censitários por raça</li>
@@ -67,36 +68,36 @@ rm(url)</code></pre>
 <p>Vou então buscar o nome do shapefile…</p>
 <pre class="r"><code>#listar arquivo .shp
 list_tmp(&quot;shp&quot;)</code></pre>
-<pre><code>## [1] &quot;/tmp/RtmpxdkmxU/35SEE250GC_SIR.shp&quot;</code></pre>
+<pre><code>## [1] &quot;/tmp/Rtmp1JJJ1P/33SEE250GC_SIR.shp&quot;</code></pre>
 <p>e listar os arquivos em formato <code>.csv</code> que foram baixados.</p>
 <pre class="r"><code># listar arquivos .csv
 list_tmp(&quot;csv&quot;)</code></pre>
-<pre><code>##  [1] &quot;/tmp/RtmpxdkmxU/Basico_SP2.csv&quot;          
-##  [2] &quot;/tmp/RtmpxdkmxU/Domicilio01_SP2.csv&quot;     
-##  [3] &quot;/tmp/RtmpxdkmxU/Domicilio02_SP2.csv&quot;     
-##  [4] &quot;/tmp/RtmpxdkmxU/DomicilioRenda_SP2.csv&quot;  
-##  [5] &quot;/tmp/RtmpxdkmxU/Entorno01_SP2.csv&quot;       
-##  [6] &quot;/tmp/RtmpxdkmxU/Entorno02_SP2.csv&quot;       
-##  [7] &quot;/tmp/RtmpxdkmxU/Entorno03_SP2.csv&quot;       
-##  [8] &quot;/tmp/RtmpxdkmxU/Entorno04_SP2.csv&quot;       
-##  [9] &quot;/tmp/RtmpxdkmxU/Entorno05_SP2.csv&quot;       
-## [10] &quot;/tmp/RtmpxdkmxU/Pessoa01_SP.csv&quot;         
-## [11] &quot;/tmp/RtmpxdkmxU/Pessoa02_SP.csv&quot;         
-## [12] &quot;/tmp/RtmpxdkmxU/Pessoa03_SP.csv&quot;         
-## [13] &quot;/tmp/RtmpxdkmxU/Pessoa04_SP.csv&quot;         
-## [14] &quot;/tmp/RtmpxdkmxU/Pessoa05_SP.csv&quot;         
-## [15] &quot;/tmp/RtmpxdkmxU/Pessoa06_SP.csv&quot;         
-## [16] &quot;/tmp/RtmpxdkmxU/Pessoa07_SP.csv&quot;         
-## [17] &quot;/tmp/RtmpxdkmxU/Pessoa08_SP.csv&quot;         
-## [18] &quot;/tmp/RtmpxdkmxU/Pessoa09_SP.csv&quot;         
-## [19] &quot;/tmp/RtmpxdkmxU/Pessoa10_SP.csv&quot;         
-## [20] &quot;/tmp/RtmpxdkmxU/Pessoa11_SP.csv&quot;         
-## [21] &quot;/tmp/RtmpxdkmxU/Pessoa12_SP.csv&quot;         
-## [22] &quot;/tmp/RtmpxdkmxU/Pessoa13_SP.csv&quot;         
-## [23] &quot;/tmp/RtmpxdkmxU/PessoaRenda_SP2.csv&quot;     
-## [24] &quot;/tmp/RtmpxdkmxU/responsavel01_sp2.csv&quot;   
-## [25] &quot;/tmp/RtmpxdkmxU/responsavel02_sp2.csv&quot;   
-## [26] &quot;/tmp/RtmpxdkmxU/ResponsavelRenda_SP2.csv&quot;</code></pre>
+<pre><code>##  [1] &quot;/tmp/Rtmp1JJJ1P/Basico_SP2.csv&quot;          
+##  [2] &quot;/tmp/Rtmp1JJJ1P/Domicilio01_SP2.csv&quot;     
+##  [3] &quot;/tmp/Rtmp1JJJ1P/Domicilio02_SP2.csv&quot;     
+##  [4] &quot;/tmp/Rtmp1JJJ1P/DomicilioRenda_SP2.csv&quot;  
+##  [5] &quot;/tmp/Rtmp1JJJ1P/Entorno01_SP2.csv&quot;       
+##  [6] &quot;/tmp/Rtmp1JJJ1P/Entorno02_SP2.csv&quot;       
+##  [7] &quot;/tmp/Rtmp1JJJ1P/Entorno03_SP2.csv&quot;       
+##  [8] &quot;/tmp/Rtmp1JJJ1P/Entorno04_SP2.csv&quot;       
+##  [9] &quot;/tmp/Rtmp1JJJ1P/Entorno05_SP2.csv&quot;       
+## [10] &quot;/tmp/Rtmp1JJJ1P/Pessoa01_SP.csv&quot;         
+## [11] &quot;/tmp/Rtmp1JJJ1P/Pessoa02_SP.csv&quot;         
+## [12] &quot;/tmp/Rtmp1JJJ1P/Pessoa03_SP.csv&quot;         
+## [13] &quot;/tmp/Rtmp1JJJ1P/Pessoa04_SP.csv&quot;         
+## [14] &quot;/tmp/Rtmp1JJJ1P/Pessoa05_SP.csv&quot;         
+## [15] &quot;/tmp/Rtmp1JJJ1P/Pessoa06_SP.csv&quot;         
+## [16] &quot;/tmp/Rtmp1JJJ1P/Pessoa07_SP.csv&quot;         
+## [17] &quot;/tmp/Rtmp1JJJ1P/Pessoa08_SP.csv&quot;         
+## [18] &quot;/tmp/Rtmp1JJJ1P/Pessoa09_SP.csv&quot;         
+## [19] &quot;/tmp/Rtmp1JJJ1P/Pessoa10_SP.csv&quot;         
+## [20] &quot;/tmp/Rtmp1JJJ1P/Pessoa11_SP.csv&quot;         
+## [21] &quot;/tmp/Rtmp1JJJ1P/Pessoa12_SP.csv&quot;         
+## [22] &quot;/tmp/Rtmp1JJJ1P/Pessoa13_SP.csv&quot;         
+## [23] &quot;/tmp/Rtmp1JJJ1P/PessoaRenda_SP2.csv&quot;     
+## [24] &quot;/tmp/Rtmp1JJJ1P/responsavel01_sp2.csv&quot;   
+## [25] &quot;/tmp/Rtmp1JJJ1P/responsavel02_sp2.csv&quot;   
+## [26] &quot;/tmp/Rtmp1JJJ1P/ResponsavelRenda_SP2.csv&quot;</code></pre>
 <p>Pronto. O shapefile está nomeado como “35SEE250GC_SIR.shp” e as variáveis tabulares de interesse estão nos seguintes arquivos (sim, é preciso ler o dicionário de variáveis):</p>
 <ul>
 <li><code>Pessoa03_SP.csv</code>
@@ -116,68 +117,68 @@ list_tmp(&quot;csv&quot;)</code></pre>
 <pre class="r"><code># importar dados em lista
 camadas &lt;- list(
     # raca
-  raca = read_ibge(&quot;Pessoa03_SP.csv&quot;) %&gt;% select(Cod_setor, V002:V006),
+  raca = fread(list_tmp(&quot;Pessoa03_SP.csv&quot;),
+               sep = &quot;;&quot;, encoding = &quot;Latin-1&quot;) %&gt;%
+    select(Cod_setor, V002:V006),
   # renda
-  renda = read_ibge(&quot;PessoaRenda_SP2.csv&quot;) %&gt;% select(Cod_setor, V001:V009),
+  renda = fread(list_tmp(&quot;PessoaRenda_SP2.csv&quot;),
+                sep = &quot;;&quot;, encoding = &quot;Latin-1&quot;) %&gt;%
+    select(Cod_setor, V001:V009),
   # setores censitários
-  setores = read_geoibge(&quot;35SEE250GC_SIR&quot;)
+  setores = read_sf(dsn=list_tmp(&quot;shp&quot;), options = &quot;ENCODING=Latin1&quot;)
   )
 camadas</code></pre>
 <pre><code>## $raca
-## # A tibble: 47,733 x 6
-##    Cod_setor V002  V003  V004  V005  V006 
-##        &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;
-##  1   3.50e14 249   3     28    24    0    
-##  2   3.50e14 550   13    86    136   0    
-##  3   3.50e14 432   3     65    24    0    
-##  4   3.50e14 613   8     63    111   0    
-##  5   3.50e14 744   4     31    33    1    
-##  6   3.50e14 740   4     52    71    0    
-##  7   3.50e14 438   13    15    96    0    
-##  8   3.50e14 656   17    41    112   1    
-##  9   3.50e14 424   20    7     113   0    
-## 10   3.50e14 465   11    2     256   1    
-## # … with 47,723 more rows
+##              Cod_setor V002 V003 V004 V005 V006
+##     1: 350010505000001  249    3   28   24    0
+##     2: 350010505000002  550   13   86  136    0
+##     3: 350010505000003  432    3   65   24    0
+##     4: 350010505000004  613    8   63  111    0
+##     5: 350010505000005  744    4   31   33    1
+##    ---                                         
+## 47729: 355730305000008  608   24   11  172    0
+## 47730: 355730305000009   45    0    0   12    0
+## 47731: 355730305000010   89    2    0   10    2
+## 47732: 355730305000011  697   59    0  232    0
+## 47733: 355730305000012  727   33    1  284    0
 ## 
 ## $renda
-## # A tibble: 47,733 x 10
-##    Cod_setor V001  V002  V003  V004  V005  V006  V007  V008  V009 
-##        &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;
-##  1   3.50e14 0     43    63    33    47    34    4     3     4    
-##  2   3.50e14 10    135   168   78    83    56    10    9     2    
-##  3   3.50e14 0     57    94    45    79    61    16    22    3    
-##  4   3.50e14 8     122   125   78    83    88    16    10    12   
-##  5   3.50e14 5     133   179   74    98    55    5     8     7    
-##  6   3.50e14 11    147   175   90    84    65    8     9     3    
-##  7   3.50e14 15    159   118   46    24    22    1     2     2    
-##  8   3.50e14 26    152   172   90    87    42    4     2     1    
-##  9   3.50e14 10    109   156   41    49    13    2     3     0    
-## 10   3.50e14 14    160   217   48    20    15    2     1     0    
-## # … with 47,723 more rows
+##              Cod_setor V001 V002 V003 V004 V005 V006 V007 V008 V009
+##     1: 350010505000001    0   43   63   33   47   34    4    3    4
+##     2: 350010505000002   10  135  168   78   83   56   10    9    2
+##     3: 350010505000003    0   57   94   45   79   61   16   22    3
+##     4: 350010505000004    8  122  125   78   83   88   16   10   12
+##     5: 350010505000005    5  133  179   74   98   55    5    8    7
+##    ---                                                             
+## 47729: 355730305000008   24   76  163   73   40   18    1    0    0
+## 47730: 355730305000009    2    4   13    4    5    2    0    0    0
+## 47731: 355730305000010    1   16   23    7    8    3    0    0    0
+## 47732: 355730305000011   34  122  224   94   48   11    0    0    0
+## 47733: 355730305000012   23  195  215   62   44    8    1    0    0
 ## 
 ## $setores
-## Simple feature collection with 68296 features and 13 fields
+## Simple feature collection with 68296 features and 14 fields
 ## geometry type:  MULTIPOLYGON
 ## dimension:      XY
-## bbox:           xmin: -335491.8 ymin: 7196857 xmax: 586149.1 ymax: 7803609
-## epsg (SRID):    31983
-## proj4string:    +proj=utm +zone=23 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
-## # A tibble: 68,296 x 14
-##       ID CD_GEOCODI TIPO  CD_GEOCODB NM_BAIRRO CD_GEOCODS NM_SUBDIST
-##    &lt;dbl&gt; &lt;chr&gt;      &lt;chr&gt; &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt;     
-##  1 67103 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
-##  2 67104 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
-##  3 67105 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
-##  4 67106 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
-##  5 67107 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
-##  6 67108 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
-##  7 67109 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
-##  8 67110 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
-##  9 67111 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
-## 10 67112 350280405… URBA… &lt;NA&gt;       &lt;NA&gt;      350280405… &lt;NA&gt;      
-## # … with 68,286 more rows, and 7 more variables: CD_GEOCODD &lt;chr&gt;,
-## #   NM_DISTRIT &lt;chr&gt;, CD_GEOCODM &lt;chr&gt;, NM_MUNICIP &lt;chr&gt;, NM_MICRO &lt;chr&gt;,
-## #   NM_MESO &lt;chr&gt;, geometry &lt;MULTIPOLYGON [m]&gt;</code></pre>
+## bbox:           xmin: -53.11011 ymin: -25.31232 xmax: -44.16137 ymax: -19.77966
+## epsg (SRID):    4674
+## proj4string:    +proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs
+## # A tibble: 68,296 x 15
+##       ID CD_GEOCODI TIPO  CD_GEOCODS NM_SUBDIST CD_GEOCODD NM_DISTRIT
+##    &lt;dbl&gt; &lt;chr&gt;      &lt;chr&gt; &lt;chr&gt;      &lt;chr&gt;      &lt;chr&gt;      &lt;chr&gt;     
+##  1 98237 354100005… URBA… 354100005… &lt;NA&gt;       354100005  PRAIA GRA…
+##  2 98232 354100005… URBA… 354100005… &lt;NA&gt;       354100005  PRAIA GRA…
+##  3 98230 354100005… URBA… 354100005… &lt;NA&gt;       354100005  PRAIA GRA…
+##  4 98229 354100005… URBA… 354100005… &lt;NA&gt;       354100005  PRAIA GRA…
+##  5 98231 354100005… URBA… 354100005… &lt;NA&gt;       354100005  PRAIA GRA…
+##  6 98233 354100005… URBA… 354100005… &lt;NA&gt;       354100005  PRAIA GRA…
+##  7 98236 354100005… URBA… 354100005… &lt;NA&gt;       354100005  PRAIA GRA…
+##  8 98242 354100005… URBA… 354100005… &lt;NA&gt;       354100005  PRAIA GRA…
+##  9 98239 354100005… URBA… 354100005… &lt;NA&gt;       354100005  PRAIA GRA…
+## 10 98238 354100005… URBA… 354100005… &lt;NA&gt;       354100005  PRAIA GRA…
+## # … with 68,286 more rows, and 8 more variables: CD_GEOCODM &lt;chr&gt;,
+## #   NM_MUNICIP &lt;chr&gt;, NM_MICRO &lt;chr&gt;, NM_MESO &lt;chr&gt;, CD_GEOCODB &lt;chr&gt;,
+## #   NM_BAIRRO &lt;chr&gt;, ID1 &lt;dbl&gt;, geometry &lt;MULTIPOLYGON [°]&gt;</code></pre>
 <p>Como resultado cada uma das três bases é um elemento dentro da lista <code>camadas</code>.</p>
 <p>O shapefile contem os polígonos dos setores censitários e as duas bases tabulates contém informações sobre raça e renda dos habitantes dos 68296 setores censitários do estado de São Paulo, embora eu queira apenas os de Peruíbe.</p>
 <p>O próximo passo é preparar os dados.</p>
@@ -187,15 +188,15 @@ camadas</code></pre>
 <p>Farei o filtro e a limpeza das observações e variáveis que não serão utilizadas, além dos tratamentos necessários. Ao fim quero ter as seguintes variáveis na base de setores censitários:</p>
 <ul>
 <li><strong>raca</strong>: brancos, pretos, amarelos, pardos, indigenas</li>
-<li><strong>renda</strong>: classeA, classeB, classeC, classeD, classeE</li>
+<li><strong>renda</strong>: sm10mais, sm10, sm5, sm2, sm1</li>
 </ul>
 <p>Com relação à renda, vale destacar que as faixas de renda são baseadas em salários mínimos e que em 2010 o salário mínimo era de R$ 510. Especificamente, as faixas de renda serão:</p>
 <ul>
-<li>classeA: &gt; 10 salários mínimos</li>
-<li>classeB: 5 a 10 salários mínimos</li>
-<li>classeC: 2 a 5 salários mínimos</li>
-<li>classeD: 1 a 2 salários mínimos</li>
-<li>classeE: até 1 salário mínimo</li>
+<li>sm10mais: &gt; 10 salários mínimos</li>
+<li>sm10: 5 a 10 salários mínimos</li>
+<li>sm5: 2 a 5 salários mínimos</li>
+<li>sm2: 1 a 2 salários mínimos</li>
+<li>sm1: até 1 salário mínimo</li>
 </ul>
 <pre class="r"><code># filtrar setores censitários de Peruíbe
 camadas$setores &lt;- camadas$setores %&gt;% 
@@ -204,53 +205,64 @@ camadas$setores &lt;- camadas$setores %&gt;%
 
 # manipular variáveis de raça e renda
 camadas$raca &lt;- camadas$raca %&gt;%  
-  filter(Cod_setor %in% camadas$setores$CD_GEOCODI) %&gt;% 
   mutate(Cod_setor = as.character(Cod_setor)) %&gt;% 
+  filter(Cod_setor %in% camadas$setores$CD_GEOCODI) %&gt;% 
   mutate_at(vars(-Cod_setor), as.numeric) %&gt;% 
   rename(CD_GEOCODI = Cod_setor, brancos = V002, pretos = V003,
          amarelos = V004, pardos = V005, indigenas = V006)
 
 camadas$renda &lt;- camadas$renda %&gt;%  
-      filter(Cod_setor %in% camadas$setores$CD_GEOCODI) %&gt;% 
-      mutate(Cod_setor = as.character(Cod_setor)) %&gt;% 
-      mutate_at(vars(-Cod_setor), as.numeric) %&gt;% 
-  mutate(classeE = V001 + V002,
-         classeC = V004 + V005,
-         classeA = V007 + V008 + V009) %&gt;% 
-  select(CD_GEOCODI = Cod_setor, classeA, classeB = V006,
-         classeC, classeD = V003, classeE)
+  mutate(Cod_setor = as.character(Cod_setor)) %&gt;% 
+  filter(Cod_setor %in% camadas$setores$CD_GEOCODI) %&gt;% 
+  mutate_at(vars(-Cod_setor), as.numeric) %&gt;% 
+  mutate(sm1 = V001 + V002,
+         sm5 = V004 + V005,
+         sm10mais = V007 + V008 + V009) %&gt;% 
+  select(CD_GEOCODI = Cod_setor, sm10mais, sm10 = V006,
+         sm5, sm2 = V003, sm1)
 
 # mesclar dados de raça e renda na malha de setores
 camadas$setores &lt;- camadas$setores %&gt;% 
-  select(CD_GEOCODI) %&gt;% 
-  left_join(camadas$raca, by = &quot;CD_GEOCODI&quot;) %&gt;% 
+  select(CD_GEOCODI) %&gt;%
+  left_join(camadas$raca, by = &quot;CD_GEOCODI&quot;) %&gt;%
   left_join(camadas$renda, by = &quot;CD_GEOCODI&quot;) %&gt;%
-  arrange(CD_GEOCODI)
+  arrange(CD_GEOCODI) %&gt;%
+  st_transform(31983) %&gt;%
+  select(1, 3:12, 2)
 
 # checar dados
-camadas$setores</code></pre>
-<pre><code>## Simple feature collection with 130 features and 11 fields
-## geometry type:  MULTIPOLYGON
-## dimension:      XY
-## bbox:           xmin: 284871.1 ymin: 7294947 xmax: 307339.1 ymax: 7330827
-## epsg (SRID):    31983
-## proj4string:    +proj=utm +zone=23 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
-## # A tibble: 130 x 12
-##    CD_GEOCODI brancos pretos amarelos pardos indigenas classeA classeB
-##    &lt;chr&gt;        &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-##  1 353760205…     424      5       31     33         0      24      51
-##  2 353760205…     154      5        2     41         0       4      23
-##  3 353760205…     125      1       33      7         0       4       8
-##  4 353760205…     333     13       17     82         0       6      27
-##  5 353760205…     267      9       27     86         0       9      21
-##  6 353760205…     268     26       15    110         0       1       8
-##  7 353760205…     257     13       10     31         0       6      17
-##  8 353760205…     338     12       17     81         0      10      35
-##  9 353760205…     448     10       23     87         0      12      47
-## 10 353760205…     434      4        8     41         0      10      43
-## # … with 120 more rows, and 4 more variables: classeC &lt;dbl&gt;,
-## #   classeD &lt;dbl&gt;, classeE &lt;dbl&gt;, geometry &lt;MULTIPOLYGON [m]&gt;</code></pre>
+glimpse(camadas$setores)</code></pre>
+<pre><code>## Observations: 130
+## Variables: 12
+## $ CD_GEOCODI &lt;chr&gt; &quot;353760205000001&quot;, &quot;353760205000002&quot;, &quot;35376020500000…
+## $ brancos    &lt;dbl&gt; 424, 154, 125, 333, 267, 268, 257, 338, 448, 434, 205…
+## $ pretos     &lt;dbl&gt; 5, 5, 1, 13, 9, 26, 13, 12, 10, 4, 1, 3, 6, 10, 68, 1…
+## $ amarelos   &lt;dbl&gt; 31, 2, 33, 17, 27, 15, 10, 17, 23, 8, 5, 0, 1, 34, 14…
+## $ pardos     &lt;dbl&gt; 33, 41, 7, 82, 86, 110, 31, 81, 87, 41, 23, 7, 1, 29,…
+## $ indigenas  &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 3,…
+## $ sm10mais   &lt;dbl&gt; 24, 4, 4, 6, 9, 1, 6, 10, 12, 10, 15, 2, 2, 18, 2, 2,…
+## $ sm10       &lt;dbl&gt; 51, 23, 8, 27, 21, 8, 17, 35, 47, 43, 29, 5, 6, 38, 4…
+## $ sm5        &lt;dbl&gt; 139, 44, 35, 92, 66, 55, 61, 119, 146, 85, 38, 18, 13…
+## $ sm2        &lt;dbl&gt; 75, 41, 32, 116, 72, 77, 76, 78, 94, 85, 41, 8, 8, 88…
+## $ sm1        &lt;dbl&gt; 55, 26, 19, 11, 72, 82, 36, 47, 60, 55, 31, 2, 2, 19,…
+## $ geometry   &lt;MULTIPOLYGON [m]&gt; MULTIPOLYGON (((297326.1 73..., MULTIPOL…</code></pre>
 <p>Aí está a variável de identificação do setor censitário reunida às 10 variáveis que indicam o número de pessoas de cada grupo populacional em cada setor censitário.</p>
+<div id="visualizar" class="section level3">
+<h3>Visualizar</h3>
+<p>E assim estão os dados até este instante.</p>
+<pre class="r"><code>plot(camadas$setores[, 2:6],
+     key.pos = 1,
+     key.width = lcm(1.3),
+     key.length = 1.0,
+     title = &quot;Distribuição da população pela cidade, por raça&quot;)</code></pre>
+<p><img src="/post/2019-02-27-mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br_files/figure-html/unnamed-chunk-8-1.png" width="960" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>plot(camadas$setores[, 7:11],
+     key.pos = 1,
+     key.width = lcm(1.3),
+     key.length = 1.0,
+     main = &quot;Distribuição da população pela cidade, por nível de renda&quot;)</code></pre>
+<p><img src="/post/2019-02-27-mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br_files/figure-html/unnamed-chunk-9-1.png" width="960" style="display: block; margin: auto;" /></p>
+</div>
 </div>
 <div id="passo-3-processamento-espacial" class="section level2">
 <h2>Passo 3: Processamento espacial</h2>
@@ -276,16 +288,16 @@ nas &lt;- camadas$setores[is.na(camadas$setores$brancos), ]
 camadas$setores &lt;- camadas$setores[!is.na(camadas$setores$brancos), ]
 
 # separar nomes das variáveis
-v &lt;- names(as_tibble(camadas$setores)[, 2:11])
+variaveis &lt;- names(as_tibble(camadas$setores)[, 2:11])
 grupos &lt;- c(&quot;Brancos&quot;, &quot;Pretos&quot;, &quot;Amarelos&quot;, &quot;Pardos&quot;, &quot;Indígenas&quot;,
-            &quot;Classe A&quot;, &quot;Classe B&quot;, &quot;Classe C&quot;, &quot;Classe D&quot;, &quot;Classe E&quot;)
-
-# realizar a atribuição dos pontos para cada grupo populacional
+            &quot;SM10+&quot;, &quot;SM10&quot;, &quot;SM5&quot;, &quot;SM2&quot;, &quot;SM1&quot;)</code></pre>
+<pre class="r"><code># realizar a atribuição dos pontos para cada grupo populacional
 pontos &lt;- lapply(1:10, function(i) {
-    st_sample(camadas$setores, round(camadas$setores[, v[i]][[v[i]]]) / 5) %&gt;% 
-      st_sf() %&gt;% 
-      st_join(camadas$setores %&gt;% select(CD_GEOCODI), join = st_intersects) %&gt;%
-      mutate(categoria = grupos[i])
+  n_pontos &lt;- round(camadas$setores[, variaveis[i]][[variaveis[i]]] / 5)
+  st_sample(camadas$setores, n_pontos) %&gt;% 
+    st_sf() %&gt;% 
+    st_join(camadas$setores %&gt;% select(CD_GEOCODI), join = st_intersects) %&gt;%
+    mutate(categoria = grupos[i])
 })
 
 # unir grupos de faixa e renda
@@ -300,44 +312,44 @@ rm(nas, pontos, v)
 
 camadas</code></pre>
 <pre><code>## $raca
-## Simple feature collection with 12086 features and 2 fields
+## Simple feature collection with 12119 features and 2 fields
 ## geometry type:  POINT
 ## dimension:      XY
-## bbox:           xmin: 285443.3 ymin: 7295754 xmax: 307151.4 ymax: 7330695
+## bbox:           xmin: 285188.8 ymin: 7296451 xmax: 307022.6 ymax: 7330642
 ## epsg (SRID):    31983
 ## proj4string:    +proj=utm +zone=23 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
 ## First 10 features:
 ##         CD_GEOCODI categoria                 geometry
-## 1  353760205000001   Brancos POINT (297360.1 7308998)
-## 2  353760205000001   Brancos POINT (297393.3 7308714)
-## 3  353760205000001   Brancos POINT (297253.3 7308865)
-## 4  353760205000001   Brancos POINT (297167.7 7308978)
-## 5  353760205000001   Brancos POINT (297314.5 7308839)
-## 6  353760205000001   Brancos   POINT (297317 7309213)
-## 7  353760205000001   Brancos POINT (297354.5 7308958)
-## 8  353760205000001   Brancos POINT (297652.6 7309018)
-## 9  353760205000001   Brancos POINT (296996.9 7308825)
-## 10 353760205000001   Brancos POINT (297408.1 7309041)
+## 1  353760205000001   Brancos POINT (297509.9 7309087)
+## 2  353760205000001   Brancos POINT (297383.4 7309186)
+## 3  353760205000001   Brancos POINT (297484.4 7308845)
+## 4  353760205000001   Brancos POINT (297387.4 7308990)
+## 5  353760205000001   Brancos   POINT (297014 7308836)
+## 6  353760205000001   Brancos POINT (297331.5 7308760)
+## 7  353760205000001   Brancos POINT (297333.2 7308995)
+## 8  353760205000001   Brancos POINT (297246.7 7308849)
+## 9  353760205000001   Brancos POINT (297148.1 7308827)
+## 10 353760205000001   Brancos POINT (297464.5 7309143)
 ## 
 ## $renda
-## Simple feature collection with 6181 features and 2 fields
+## Simple feature collection with 6302 features and 2 fields
 ## geometry type:  POINT
 ## dimension:      XY
-## bbox:           xmin: 285515.7 ymin: 7296513 xmax: 306920.8 ymax: 7330286
+## bbox:           xmin: 286156.9 ymin: 7295778 xmax: 307043.4 ymax: 7330279
 ## epsg (SRID):    31983
 ## proj4string:    +proj=utm +zone=23 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
 ## First 10 features:
 ##         CD_GEOCODI categoria                 geometry
-## 1  353760205000001  Classe A POINT (297156.5 7308927)
-## 2  353760205000001  Classe A POINT (297319.6 7309036)
-## 3  353760205000005  Classe A POINT (296755.2 7308705)
-## 4  353760205000007  Classe A POINT (296853.4 7309423)
-## 5  353760205000008  Classe A POINT (297394.4 7309465)
-## 6  353760205000008  Classe A POINT (297426.5 7309398)
-## 7  353760205000009  Classe A POINT (297282.1 7310019)
-## 8  353760205000009  Classe A POINT (297373.4 7309870)
-## 9  353760205000009  Classe A   POINT (297687 7309750)
-## 10 353760205000009  Classe A POINT (297624.6 7309765)
+## 1  353760205000001     SM10+ POINT (297385.6 7308807)
+## 2  353760205000001     SM10+ POINT (297403.9 7309190)
+## 3  353760205000001     SM10+   POINT (297251 7308864)
+## 4  353760205000001     SM10+ POINT (297428.7 7309020)
+## 5  353760205000001     SM10+ POINT (297460.9 7309020)
+## 6  353760205000002     SM10+ POINT (297442.2 7308729)
+## 7  353760205000003     SM10+ POINT (297263.3 7308434)
+## 8  353760205000004     SM10+ POINT (296884.5 7308154)
+## 9  353760205000014     SM10+ POINT (296884.5 7308154)
+## 10 353760205000005     SM10+ POINT (296831.1 7308690)
 ## 
 ## $setores
 ## Simple feature collection with 130 features and 11 fields
@@ -347,20 +359,20 @@ camadas</code></pre>
 ## epsg (SRID):    31983
 ## proj4string:    +proj=utm +zone=23 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs
 ## # A tibble: 130 x 12
-##    CD_GEOCODI brancos pretos amarelos pardos indigenas classeA classeB
-##    &lt;chr&gt;        &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-##  1 353760205…     424      5       31     33         0      24      51
-##  2 353760205…     154      5        2     41         0       4      23
-##  3 353760205…     125      1       33      7         0       4       8
-##  4 353760205…     333     13       17     82         0       6      27
-##  5 353760205…     267      9       27     86         0       9      21
-##  6 353760205…     268     26       15    110         0       1       8
-##  7 353760205…     257     13       10     31         0       6      17
-##  8 353760205…     338     12       17     81         0      10      35
-##  9 353760205…     448     10       23     87         0      12      47
-## 10 353760205…     434      4        8     41         0      10      43
-## # … with 120 more rows, and 4 more variables: classeC &lt;dbl&gt;,
-## #   classeD &lt;dbl&gt;, classeE &lt;dbl&gt;, geometry &lt;MULTIPOLYGON [m]&gt;</code></pre>
+##    CD_GEOCODI brancos pretos amarelos pardos indigenas sm10mais  sm10   sm5
+##    &lt;chr&gt;        &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1 353760205…     424      5       31     33         0       24    51   139
+##  2 353760205…     154      5        2     41         0        4    23    44
+##  3 353760205…     125      1       33      7         0        4     8    35
+##  4 353760205…     333     13       17     82         0        6    27    92
+##  5 353760205…     267      9       27     86         0        9    21    66
+##  6 353760205…     268     26       15    110         0        1     8    55
+##  7 353760205…     257     13       10     31         0        6    17    61
+##  8 353760205…     338     12       17     81         0       10    35   119
+##  9 353760205…     448     10       23     87         0       12    47   146
+## 10 353760205…     434      4        8     41         0       10    43    85
+## # … with 120 more rows, and 3 more variables: sm2 &lt;dbl&gt;, sm1 &lt;dbl&gt;,
+## #   geometry &lt;MULTIPOLYGON [m]&gt;</code></pre>
 <p>Os dados agora estão prontos para ser visualizados.</p>
 </div>
 </div>
@@ -388,7 +400,7 @@ p &lt;- lapply(1:2, function(i) {
 })
 
 do.call(grid.arrange, c(p, ncol = 2))</code></pre>
-<p><img src="/post/2019-02-27-mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br_files/figure-html/unnamed-chunk-9-1.png" width="1152" style="display: block; margin: auto;" /></p>
+<p><img src="/post/2019-02-27-mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br_files/figure-html/unnamed-chunk-12-1.png" width="1152" style="display: block; margin: auto;" /></p>
 </div>
 <div id="mapas-dos-grupos-populacionais" class="section level3">
 <h3>Mapas dos grupos populacionais</h3>
@@ -405,7 +417,7 @@ do.call(grid.arrange, c(p, ncol = 2))</code></pre>
     )
 
 do.call(gridExtra::grid.arrange, c(p, nrow = 2))</code></pre>
-<p><img src="/post/2019-02-27-mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br_files/figure-html/unnamed-chunk-10-1.png" width="1152" style="display: block; margin: auto;" /></p>
+<p><img src="/post/2019-02-27-mapa-de-pontos-raciais-no-r-com-o-pacote-sf.pt-br_files/figure-html/unnamed-chunk-13-1.png" width="1152" style="display: block; margin: auto;" /></p>
 <p>Depois de ver esses mapas, o que você pensa sobre a relação entre renda, raça e local de moradia na cidade de Peruíbe?</p>
 </div>
 </div>

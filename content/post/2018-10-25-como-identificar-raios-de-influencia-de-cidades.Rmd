@@ -214,7 +214,7 @@ p1 <- ggplot(munic) +
   geom_sf(aes(fill = Raio_borda), lwd = .1) +
   labs(title = "Raios de influência de Piracicaba",
        subtitle = "A partir das bordas") +
-  asha::theme_map() +
+  seda::light_map_theme() +
   theme(legend.position = "bottom")
 p1
 ```
@@ -328,7 +328,7 @@ p2 <- ggplot(munic) +
   geom_sf(aes(fill = Raio_centroide), lwd = .1) +
   labs(title = "Raios de influência de Piracicaba",
        subtitle = "A partir do centroide") +
-  asha::theme_map() +
+  seda::light_map_theme() +
   theme(legend.position = "bottom")
 p2
 ```
