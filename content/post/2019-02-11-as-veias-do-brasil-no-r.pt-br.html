@@ -30,27 +30,27 @@ bigimg: [{src: "/img/mapa_brasil_capa.png"}]
 <li><a href="http://metadados.ana.gov.br/geonetwork/srv/pt/metadata.show?id=92&amp;currTab=distribution">Regiões hidrográficas do Brasil</a></li>
 </ul>
 <p>Então, vou baixar os dados:</p>
-<pre class="r"><code># baixar shapefile de cursos d&#39;água
-dir &lt;- &quot;data-raw/geoft_bho&quot;
-url &lt;- &quot;http://metadados.ana.gov.br/geonetwork/srv/pt/http://metadados.ana.gov.br/geonetwork/srv/en/resources.get?id=267&amp;fname=geoft_bho_cursodagua.zip&amp;access=private&quot;
-  
-# Obter os dados
-if (!file.exists(dir)) {
-    tmp &lt;- tempfile(fileext = &quot;.zip&quot;)
-    download.file(url, tmp)
-    unzip(tmp, exdir = dir)
-    unlink(tmp)
-}
-
-dir &lt;- &quot;data-raw/SNIRH_regioes_hidrograficas&quot;
-url &lt;- &quot;http://metadados.ana.gov.br/geonetwork/srv/pt/http://metadados.ana.gov.br/geonetwork/srv/en/resources.get?id=92&amp;fname=SNIRH_RegioesHidrograficas.zip&amp;access=private&quot;
-
-if (!file.exists(dir)) {
-    tmp &lt;- tempfile(fileext = &quot;.zip&quot;)
-    download.file(url, tmp)
-    unzip(tmp, exdir = dir)
-    unlink(tmp)
-}</code></pre>
+<pre class="r"><code># # baixar shapefile de cursos d&#39;água
+# dir &lt;- &quot;data-raw/geoft_bho&quot;
+# url &lt;- &quot;https://metadados.ana.gov.br/geonetwork/srv/en/resources.get?id=267&amp;fname=geoft_bho_cursodagua.zip&amp;access=private&quot;
+#   
+# # Obter os dados
+# if (!file.exists(dir)) {
+#     tmp &lt;- tempfile(fileext = &quot;.zip&quot;)
+#     curl_download(url, tmp)
+#     unzip(tmp, exdir = dir)
+#     unlink(tmp)
+# }
+# 
+# dir &lt;- &quot;data-raw/SNIRH_regioes_hidrograficas&quot;
+# url &lt;- &quot;http://metadados.ana.gov.br/geonetwork/srv/pt/http://metadados.ana.gov.br/geonetwork/srv/en/resources.get?id=92&amp;fname=SNIRH_RegioesHidrograficas.zip&amp;access=private&quot;
+# 
+# if (!file.exists(dir)) {
+#     tmp &lt;- tempfile(fileext = &quot;.zip&quot;)
+#     download.file(url, tmp)
+#     unzip(tmp, exdir = dir)
+#     unlink(tmp)
+# }</code></pre>
 <p>O código axima realizou o download do arquivo zipado, descompactou e guardou os arquivos extraídos em um diretório chamado <code>data-raw/geoft_bho</code>, localizado na raiz do seu diretório de trabalho.</p>
 </div>
 <div id="carregar-pacotes-e-importar-dados" class="section level2">
@@ -76,17 +76,16 @@ library(tidyverse) # dplyr, ggplot2, stringr e outros
 library(seda)</code></pre>
 <p>O próximo passo é importar os dados.</p>
 <pre class="r"><code># Importar os dados
-cursos &lt;- read_sf(dsn = &quot;data-raw/geoft_bho&quot;, layer = &quot;geoft_bho_cursodagua&quot;)
-regioes &lt;- read_sf(dsn = &quot;data-raw/SNIRH_regioes_hidrograficas&quot;,
-                   layer = &quot;SNIRH_RegioesHidrograficas&quot;)</code></pre>
+cursos &lt;- read_sf(&quot;data-raw/geoft_bho_cursodagua/geoft_bho_cursodagua.shp&quot;)
+regioes &lt;- read_sf(&quot;data-raw/SNIRH_RegioesHidrograficas/SNIRH_RegioesHidrograficas.shp&quot;)</code></pre>
 <p>Os dados já estão disponíveis no ambiente de trabalho. Vamos dar uma olhada rapidamente neles, para saber com o que estamos lidando:</p>
 <pre class="r"><code>head(cursos)</code></pre>
 <pre><code>## Simple feature collection with 6 features and 11 fields
 ## geometry type:  MULTILINESTRING
 ## dimension:      XY
 ## bbox:           xmin: -65.64893 ymin: -18.06182 xmax: -55.30987 ymax: -8.016336
-## epsg (SRID):    NA
-## proj4string:    +proj=longlat +ellps=GRS80 +no_defs
+## epsg (SRID):    4674
+## proj4string:    +proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs
 ## # A tibble: 6 x 12
 ##   WTC_PK  IDCDA COCURSODAG NUDISTBACC NUCOMPCDA NUAREABACC COCDADESAG
 ##    &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;           &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt; &lt;chr&gt;     
@@ -104,8 +103,8 @@ regioes &lt;- read_sf(dsn = &quot;data-raw/SNIRH_regioes_hidrograficas&quot;,
 ## geometry type:  MULTIPOLYGON
 ## dimension:      XY
 ## bbox:           xmin: -57.64388 ymin: -31.82839 xmax: -34.7931 ymax: -0.5352369
-## epsg (SRID):    NA
-## proj4string:    +proj=longlat +ellps=GRS80 +no_defs
+## epsg (SRID):    4674
+## proj4string:    +proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs
 ## # A tibble: 6 x 6
 ##   RHI_SG RHI_CD RHI_NM    RHI_AR_KM2 RHI_VE                        geometry
 ##   &lt;chr&gt;   &lt;dbl&gt; &lt;chr&gt;          &lt;dbl&gt; &lt;chr&gt;               &lt;MULTIPOLYGON [°]&gt;
@@ -119,7 +118,7 @@ regioes &lt;- read_sf(dsn = &quot;data-raw/SNIRH_regioes_hidrograficas&quot;,
 </div>
 <div id="preparar-os-dados" class="section level2">
 <h2>Preparar os dados</h2>
-<div id="limpar-variaveis-e-reprojetar" class="section level3">
+<div id="limpar-variáveis-e-reprojetar" class="section level3">
 <h3>Limpar variáveis e reprojetar</h3>
 <p>Antes de avançar, vamos limpar as variáveis que não serão usadas e ajustar a projeção. As duas bases estão configuradas com um sistema de referências de coordenadas <em>latlong</em>, então transformarei a projeção para UTM, particularmente o CRS Sirgas 2000 / UTM zone 23, cujo código EPSG é <a href="http://spatialreference.org/ref/epsg/31983/">31983</a>.</p>
 <pre class="r"><code>cursos &lt;- cursos %&gt;% select(COCURSODAG, NUCOMPCDA) %&gt;% st_transform(31983)
@@ -142,7 +141,7 @@ plot(st_geometry(regioes), add = TRUE)</code></pre>
 <p>Para concluir a etapa de preparação ainda é preciso identificar a região hidrográfica a que cada rio pertence.</p>
 </div>
 </div>
-<div id="identificar-rhi-dos-cursos-dagua" class="section level2">
+<div id="identificar-rhi-dos-cursos-dágua" class="section level2">
 <h2>Identificar RHI dos cursos d’água</h2>
 <p>Conforme comentei acima a base de cursos d’água não identifica a RHI de cada curso. Como o objetivo é colorir os rios de acordo com a região, esta é uma etapa importante do procedimento.</p>
 <p>A identificação será feita com uma operação de intersecção. Isto é, perguntarei ao R em qual polígono de região as linhas dos cursos d’água estão. Usando em conjunto as funções <code>st_join()</code> e <code>st_intersects()</code> do pacote <code>sf</code> é possível realizar esta operação. Trabalharei apenas com os cursos d’água com comprimento igual ou maior que 15 km. Além de ser o suficiente para não poluir a visualização, levará menos tempo para processar.</p>
@@ -164,7 +163,7 @@ head(cursos)</code></pre>
 <p>Para resolver este problema eu farei uma intersecção dos polígonos com os centroides dos rios duplicados. Provavelmente haverá um outro caso que não será corrigido após este procedimento, mas se forem poucos, não haverá importância, já que nosso objetivo é estético.</p>
 <pre class="r"><code># Etapa 2
 # identificar e separar cursos duplicados
-cod &lt;- cursos %&gt;% filter(duplicated(COCURSODAG)) %&gt;%pull(COCURSODAG)
+cod &lt;- cursos %&gt;% filter(duplicated(COCURSODAG)) %&gt;% pull(COCURSODAG)
 erros &lt;- cursos %&gt;% filter(COCURSODAG %in% cod)
 
 # identificar RHI dos centroides dos cursos separados
@@ -192,7 +191,7 @@ cursos &lt;- cursos %&gt;%
 <pre><code>## Simple feature collection with 6 features and 4 fields
 ## geometry type:  MULTILINESTRING
 ## dimension:      XY
-## bbox:           xmin: -2575625 ymin: 7751014 xmax: -617523.6 ymax: 9069233
+## bbox:           xmin: -2575625 ymin: 7907111 xmax: -617523.6 ymax: 9069233
 ## epsg (SRID):    NA
 ## proj4string:    +proj=utm +zone=23 +south +ellps=GRS80 +units=m +no_defs
 ## # A tibble: 6 x 5
@@ -203,7 +202,7 @@ cursos &lt;- cursos %&gt;%
 ## 3 4634            904. AMAZÔN…      1 ((-1215932 8539948, -1216812 8539381…
 ## 4 46362           435. AMAZÔN…      1 ((-1587682 8843464, -1587188 8844405…
 ## 5 464            1428. AMAZÔN…      1 ((-2480176 8541432, -2479726 8541993…
-## 6 466            2081. AMAZÔN…      1 ((-1540308 7786575, -1539283 7785714…</code></pre>
+## 6 4644           1298. &lt;NA&gt;        NA ((-1990049 8288375, -1989618 8288919…</code></pre>
 <p>Restaram na base 32.695 observações. Além do código e do cumprimento do curso d’água, a base agora tem também duas novas variáveis identificando a região hidrográfica, criadas a partir da intersecção com os polígonos das regiões.</p>
 </div>
 <div id="plotar-os-mapas" class="section level2">
@@ -218,11 +217,7 @@ theme_set(
 )
 
 # criar paleta arco íris
-cores &lt;- rainbow(12, s = .4, v = 1)
-cores</code></pre>
-<pre><code>##  [1] &quot;#FF9999FF&quot; &quot;#FFCC99FF&quot; &quot;#FFFF99FF&quot; &quot;#CCFF99FF&quot; &quot;#99FF99FF&quot;
-##  [6] &quot;#99FFCCFF&quot; &quot;#99FFFFFF&quot; &quot;#99CCFFFF&quot; &quot;#9999FFFF&quot; &quot;#CC99FFFF&quot;
-## [11] &quot;#FF99FFFF&quot; &quot;#FF99CCFF&quot;</code></pre>
+cores &lt;- rainbow(12, s = .4, v = 1)</code></pre>
 <p>Agora o tema será automaticamente aplicado a todos os gráficos (mapas) gerados a seguir. Eu também já defini uma paleta com 12 cores da escala arco-íris, que serão usadas para colorir as regiões hidrográficas.</p>
 <pre class="r"><code>cores</code></pre>
 <pre><code>##  [1] &quot;#FF9999FF&quot; &quot;#FFCC99FF&quot; &quot;#FFFF99FF&quot; &quot;#CCFF99FF&quot; &quot;#99FF99FF&quot;
@@ -245,7 +240,7 @@ ggplot(cursos %&gt;% filter(NUCOMPCDA &gt; 40)) +
 </ul>
 <p>Com estas definições, basicamente, quanto maior o rio, mais largo ele é representado e mais visível ele fica.</p>
 </div>
-<div id="mapas-das-regioes-hidrograficas" class="section level3">
+<div id="mapas-das-regiões-hidrográficas" class="section level3">
 <h3>Mapas das regiões hidrográficas</h3>
 <p>Já a criação dos mapas das regiões é uma tarefa repetitiva. São 12 mapas.</p>
 <p>Para não repetir o código usado acima 12 vezes criei uma função customizada <code>plot_regioes()</code> para replicar o procedimento usando a função <code>map</code> do pacote <code>purr</code> (parte do <code>tidyverse</code>), que é uma alternativa ao <code>lapply()</code>/<code>sapply()</code>. A diferença é que antes de gerar o mapa a função filtrará uma região, usará seu nome no título e aplicará uma das cores da paleta <code>cores</code>.</p>

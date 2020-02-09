@@ -67,8 +67,8 @@ munic &lt;- read_sf(dsn = &quot;data/sp_municipios_2017&quot;,
 ## geometry type:  MULTIPOLYGON
 ## dimension:      XY
 ## bbox:           xmin: -51.17924 ymin: -23.03648 xmax: -46.54881 ymax: -21.19701
-## epsg (SRID):    NA
-## proj4string:    +proj=longlat +ellps=GRS80 +no_defs
+## epsg (SRID):    4674
+## proj4string:    +proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs
 ## # A tibble: 6 x 3
 ##   NM_MUNICIP       CD_GEOCMU                                       geometry
 ##   &lt;chr&gt;            &lt;chr&gt;                                 &lt;MULTIPOLYGON [°]&gt;
@@ -82,9 +82,9 @@ munic &lt;- read_sf(dsn = &quot;data/sp_municipios_2017&quot;,
 <p>Podemos ver que a coordenada de referência dos dados está em <code>+proj=longlat +ellps=GRS80 +no_defs</code>, com as coordenadas em latitude e logitude. As funções de manipulação geométrica do <code>sf</code> assumem uma projeção diferente, baseada em DATUM</p>
 </div>
 </div>
-<div id="metodo-1-raios-a-partir-das-bordas-da-cidade" class="section level1">
+<div id="método-1-raios-a-partir-das-bordas-da-cidade" class="section level1">
 <h1>Método 1: raios a partir das bordas da cidade</h1>
-<div id="etapas-de-manipulacao" class="section level2">
+<div id="etapas-de-manipulação" class="section level2">
 <h2>Etapas de manipulação</h2>
 <p>A manipulação dos dados, efetivamente, envolve as seguintes etapas:</p>
 <ol style="list-style-type: decimal">
@@ -116,7 +116,7 @@ raio100_borda &lt;- munic %&gt;%
   geom_sf(data = raio100_borda, alpha = 0, aes(col = &quot;100 km&quot;))</code></pre>
 <p><img src="/post/2018-10-25-como-identificar-raios-de-influencia-de-cidades_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
 </div>
-<div id="identificar-as-cidades-com-intersecao-nos-raios" class="section level2">
+<div id="identificar-as-cidades-com-interseção-nos-raios" class="section level2">
 <h2>2. Identificar as cidades com interseção nos raios</h2>
 <p>Queremos saber quais as cidades vizinhas a Piracicaba que estão dentro dos limites dos raios de 20km, 50km e 100km. Isto é uma tarefa de intersecção de geometrias. Assim como a escolha de entre criar os raios a partir das bordas ou dos centroides é uma decisão a ser tomada, dependendo das características da análise a ser realizada, é preciso definir também o critério de intersecção. Ou seja, o que define a intersecção? Podemos considerar o polígono das cidades ou os seus centroides, por exemplo.</p>
 <p>Neste caso, consideraremos sob os raios de influência qualquer cidade com ao menos uma parte do seu território (o polígono do seu território) dentro do raio.</p>
@@ -146,7 +146,7 @@ cidades_borda100 &lt;- st_join(
   mutate(raioborda100 = 1)</code></pre>
 <p>Fizemos a seleção das variáveis tabulares no procedimento para evitar redundância no resultado (se quiser entender, retire as seleções, rode o código e veja os resultados). Além disso, criamos uma variável chamada <code>Raio</code>, que identifica com o valor <code>1</code> os municípios extraídos. Esta variável será transformada na variável binária de identificação dos raios, na base <code>munic</code>.</p>
 </div>
-<div id="mescla-na-base-de-municipios-do-estado-de-sao-paulo" class="section level2">
+<div id="mescla-na-base-de-municípios-do-estado-de-são-paulo" class="section level2">
 <h2>3. Mescla na base de municípios do estado de São Paulo</h2>
 <pre class="r"><code>munic &lt;- munic %&gt;%
   merge(cidades_borda20 %&gt;% as.data.frame %&gt;% select(-NM_MUNICIP, -geometry),
@@ -198,7 +198,7 @@ p1</code></pre>
 <p><img src="/post/2018-10-25-como-identificar-raios-de-influencia-de-cidades_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
 </div>
 </div>
-<div id="metodo-2-raios-a-partir-das-bordas-da-cidade" class="section level1">
+<div id="método-2-raios-a-partir-das-bordas-da-cidade" class="section level1">
 <h1>Método 2: raios a partir das bordas da cidade</h1>
 <div id="gerar-centroide" class="section level2">
 <h2>1. Gerar centroide</h2>
@@ -224,7 +224,7 @@ raio100_centroide &lt;- centroide %&gt;%
   geom_sf(data = raio100_centroide, alpha = 0, aes(col = &quot;100 km&quot;))</code></pre>
 <p><img src="/post/2018-10-25-como-identificar-raios-de-influencia-de-cidades_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
 </div>
-<div id="identificar-as-cidades-com-intersecao-nos-raios-1" class="section level2">
+<div id="identificar-as-cidades-com-interseção-nos-raios-1" class="section level2">
 <h2>2. Identificar as cidades com interseção nos raios</h2>
 <pre class="r"><code># raio de 20km
 cidades_centroide20 &lt;- st_join(
@@ -250,7 +250,7 @@ cidades_centroide100 &lt;- st_join(
   ) %&gt;% 
   mutate(raiocentroide100 = 1)</code></pre>
 </div>
-<div id="mescla-na-base-de-municipios-do-estado-de-sao-paulo-1" class="section level2">
+<div id="mescla-na-base-de-municípios-do-estado-de-são-paulo-1" class="section level2">
 <h2>3. Mescla na base de municípios do estado de São Paulo</h2>
 <pre class="r"><code>munic &lt;- munic %&gt;%
   merge(cidades_centroide20 %&gt;% as.data.frame %&gt;% select(-NM_MUNICIP, -geometry),

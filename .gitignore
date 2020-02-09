@@ -6,7 +6,7 @@
 blogdown/
 public/
 content/post/data
-content/post/data-raw
+*data-raw
 content/post/graphs
 content/post/scripts
 

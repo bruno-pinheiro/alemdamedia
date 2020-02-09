@@ -29,11 +29,11 @@ df &lt;-
 str(df)</code></pre>
 <pre><code>## &#39;data.frame&#39;:    38 obs. of  3 variables:
 ##  $ ano  : int  2000 2000 2001 2001 2002 2002 2003 2003 2004 2004 ...
-##  $ dolar: num  1.57 1.87 2.07 2.12 2.2 ...
+##  $ dolar: num  1.92 1.98 2.02 2.06 2.12 ...
 ##  $ tipo : Factor w/ 2 levels &quot;comercial&quot;,&quot;turístico&quot;: 1 2 1 2 1 2 1 2 1 2 ...</code></pre>
 <p>Nossos dados estão na forma de um data.frame com três colunas e 30 linhas. Digamos que trata-se realmente da evolução anual do preço médio anual do dólar em relação ao real e que queremos plotar um gráfico de série temporal da cotação média do dólar, tipo. E que queremos adicionar também um ponto num local específico do plot, representando o preço máximo do dólar no ano em que a média e o valor máximo ficaram mais distantes. Podemos fazer isso sem dificuldades com o ggplot.</p>
 </div>
-<div id="criar-o-grafico" class="section level1">
+<div id="criar-o-gráfico" class="section level1">
 <h1>Criar o gráfico</h1>
 <p>É preciso carregar o pacote ggplot2.</p>
 <pre class="r"><code>library(ggplot2)</code></pre>
@@ -45,7 +45,7 @@ str(df)</code></pre>
 p1</code></pre>
 <p><img src="/post/2018-10-08-manipulando-os-simbolos-na-legenda-do-ggplot2_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
 <p>Já temos um gráfico bastante interessante, porém as legendas não estão adequadamente formatadas, de modo que tanto as linhas estão cortadas por um círculo como o ponto está cortado por uma linha. Queremos adequar os símbolos para que as linhas sejam representadas por linhas e o ponto apenas por um ponto.</p>
-<div id="manipular-simbolos-da-legenda" class="section level2">
+<div id="manipular-símbolos-da-legenda" class="section level2">
 <h2>Manipular símbolos da legenda</h2>
 <p>Para conseguir a manipulação que desejamos, é preciso adicionar algumas especificações utilizando a função guides(), conforme indicado abaixo. Dentro dele indicamos o argumento color, e sobrescrevemos o mapeamento estético dos símbolos dentro de guide_legend(), passando os valores que definem o tipo de ponto pch e de linha linetype dentro de uma lista.</p>
 <pre class="r"><code>p1 +

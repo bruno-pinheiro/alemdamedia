@@ -12,7 +12,7 @@ tags:
 
 
 
-<div id="criacao-do-projeto-por-meio-do-blogdown" class="section level2">
+<div id="criação-do-projeto-por-meio-do-blogdown" class="section level2">
 <h2>Criação do projeto por meio do blogdown</h2>
 <p>O <code>blogdown</code> é um pacote criado por <a href="https://yihui.name/en/">Yuhui Xie</a> que amplia as já existentes funcionalidades de construção de sites que o R e o RStudio disponibilizam. O pacote internaliza toda a criação de sites com o framework <a href="https://gohugo.io/">Hugo</a>, um gerador de sites estáticos em código aberto bastante popular e eficiente.</p>
 <p>A criação do site em si é bastante simples. Se for um site com layout básico, sem personalizações, realmente pode ser realizado em cerca de 10 minutos. Basta proceder com as etapas descritas a seguir.</p>
@@ -29,7 +29,7 @@ tags:
 <p>A criação do site é muito simples. Pode ser feita diretamente por meio do menu <code>File &gt; New Project</code>, escolhendo a opção “Website project with Hugo”. Também pode ser feito manualmente, mas fiz diretamente pelo menu.</p>
 <p>Após criar o projeto o RStudio iniciará uma sessão no diretório onde o projeto foi criado e haverá uma série de arquivos.</p>
 </div>
-<div id="configuracoes-basicas" class="section level3">
+<div id="configurações-básicas" class="section level3">
 <h3>Configurações básicas</h3>
 <p>As configurações básicas são feitas no arquivo <code>config.toml</code>, que está localizado no diretório raiz do projeto.</p>
 <pre><code>baseurl = &quot;&quot;
@@ -63,14 +63,14 @@ file.edit(&#39;.Rprofile&#39;) ## para configuração local</code></pre>
 <p>Esta função realiza todo o trabalho duro de geração do HTML, conforme é possível ver. Todo o conteúdo será gerado a partir de arquivos de texto plano em rmarkdown e guardado no diretório <code>\content</code>. E será automaticamente renderizado e incluído no site.</p>
 </div>
 </div>
-<div id="configuracao-do-git" class="section level2">
+<div id="configuração-do-git" class="section level2">
 <h2>Configuração do git</h2>
 <p>Para publicar o site os arquivos precisam estar disponibilizados na nuvem. O GitHub é uma solução extremamente robusta para o versionamento de arquivos, especialmente códigos. Neste caso o projeto é sincronizado com um repositório do GitHub.</p>
-<div id="criacao-do-repositorio-no-github" class="section level3">
+<div id="criação-do-repositório-no-github" class="section level3">
 <h3>Criação do repositório no GitHub</h3>
 <p>Deve ser criado com o mesmo nome do projeto</p>
 </div>
-<div id="iniciar-o-repositorio-local-do-git" class="section level3">
+<div id="iniciar-o-repositório-local-do-git" class="section level3">
 <h3>Iniciar o repositório local do git</h3>
 <p>Já estando no terminal e no diretório do projeto:</p>
 <pre><code>$ git init

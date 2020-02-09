@@ -41,27 +41,27 @@ A segunda base tem a geometria poligonal das regiões hidrográficas brasileiras
 Então, vou baixar os dados:
 
 ```{r}
-# baixar shapefile de cursos d'água
-dir <- "data-raw/geoft_bho"
-url <- "http://metadados.ana.gov.br/geonetwork/srv/pt/http://metadados.ana.gov.br/geonetwork/srv/en/resources.get?id=267&fname=geoft_bho_cursodagua.zip&access=private"
-  
-# Obter os dados
-if (!file.exists(dir)) {
-    tmp <- tempfile(fileext = ".zip")
-    download.file(url, tmp)
-    unzip(tmp, exdir = dir)
-    unlink(tmp)
-}
-
-dir <- "data-raw/SNIRH_regioes_hidrograficas"
-url <- "http://metadados.ana.gov.br/geonetwork/srv/pt/http://metadados.ana.gov.br/geonetwork/srv/en/resources.get?id=92&fname=SNIRH_RegioesHidrograficas.zip&access=private"
-
-if (!file.exists(dir)) {
-    tmp <- tempfile(fileext = ".zip")
-    download.file(url, tmp)
-    unzip(tmp, exdir = dir)
-    unlink(tmp)
-}
+# # baixar shapefile de cursos d'água
+# dir <- "data-raw/geoft_bho"
+# url <- "https://metadados.ana.gov.br/geonetwork/srv/en/resources.get?id=267&fname=geoft_bho_cursodagua.zip&access=private"
+#   
+# # Obter os dados
+# if (!file.exists(dir)) {
+#     tmp <- tempfile(fileext = ".zip")
+#     curl_download(url, tmp)
+#     unzip(tmp, exdir = dir)
+#     unlink(tmp)
+# }
+# 
+# dir <- "data-raw/SNIRH_regioes_hidrograficas"
+# url <- "http://metadados.ana.gov.br/geonetwork/srv/pt/http://metadados.ana.gov.br/geonetwork/srv/en/resources.get?id=92&fname=SNIRH_RegioesHidrograficas.zip&access=private"
+# 
+# if (!file.exists(dir)) {
+#     tmp <- tempfile(fileext = ".zip")
+#     download.file(url, tmp)
+#     unzip(tmp, exdir = dir)
+#     unlink(tmp)
+# }
 ```
 
 O código axima realizou o download do arquivo zipado, descompactou e guardou os arquivos extraídos em um diretório chamado `data-raw/geoft_bho`, localizado na raiz do seu diretório de trabalho.
@@ -104,9 +104,8 @@ O próximo passo é importar os dados.
 
 ```{r}
 # Importar os dados
-cursos <- read_sf(dsn = "data-raw/geoft_bho", layer = "geoft_bho_cursodagua")
-regioes <- read_sf(dsn = "data-raw/SNIRH_regioes_hidrograficas",
-                   layer = "SNIRH_RegioesHidrograficas")
+cursos <- read_sf("data-raw/geoft_bho_cursodagua/geoft_bho_cursodagua.shp")
+regioes <- read_sf("data-raw/SNIRH_RegioesHidrograficas/SNIRH_RegioesHidrograficas.shp")
 ```
 
 Os dados já estão disponíveis no ambiente de trabalho. Vamos dar uma olhada rapidamente neles, para saber com o que estamos lidando:
@@ -192,7 +191,7 @@ Para resolver este problema eu farei uma intersecção dos polígonos com os cen
 ```{r, eval = FALSE}
 # Etapa 2
 # identificar e separar cursos duplicados
-cod <- cursos %>% filter(duplicated(COCURSODAG)) %>%pull(COCURSODAG)
+cod <- cursos %>% filter(duplicated(COCURSODAG)) %>% pull(COCURSODAG)
 erros <- cursos %>% filter(COCURSODAG %in% cod)
 
 # identificar RHI dos centroides dos cursos separados
@@ -243,7 +242,6 @@ theme_set(
 
 # criar paleta arco íris
 cores <- rainbow(12, s = .4, v = 1)
-cores
 ```
 
 Agora o tema será automaticamente aplicado a todos os gráficos (mapas) gerados a seguir. Eu também já defini uma paleta com 12 cores da escala arco-íris, que serão usadas para colorir as regiões hidrográficas.

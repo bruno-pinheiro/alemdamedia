@@ -1,0 +1,192 @@
+---
+title: Aquele tutorial maroto para você entender regressão linear de uma vez por todas
+author: Bruno Pinheiro
+date: '2020-02-08'
+slug: aquele-tutorial-maroto-para-você-entender-regressão-linear-de-uma-vez-por-todas
+categories:
+  - Tutoriais
+tags:
+  - estatístitica
+  - regressão
+  - modelos lineares
+type: 'post'
+subtitle: ''
+image: ''
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE,
+                      warning = FALSE, 
+                      error = FALSE)
+```
+
+
+Se como eu você vem de um background de humanas, sei bem, algumas coisas em estatística podem parecer apavorantes num primeiro momento. Mas acredite, se levar primeiro para o lado da intuição e só depois para o da matemática, vai ficar mais fácil entender os fundamentos estatísticos e matemáticos.
+
+A regressão linear é uma das técnicas mais tradicionais de aprendizagem estatística e, no mundo da aprendizagem de máquina, desempenha papel importante em uma grande variedade de aplicações. É um tipo de modelo dos básicos, que qualquer pessoa querendo atuar com ciência de dados precisa dominar.
+
+Com este post, você terá um background mínimo para utilizar esta importante técnica para realizar algumas análises, avaliar a qualidade do seu modelo, realizar inferências e, também, utilizar a regressão linear como um modelo preditivo.
+
+## Preparar o ambiente
+
+### Pacotes
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(broom)
+
+theme_set(theme_classic())
+```
+
+### Dados
+
+```{r}
+gfdd <- read.csv("data/GFDDData_clean.csv")
+indicadores <- read.csv("data/GFDD_lista_indicadores.csv", stringsAsFactors = FALSE)
+
+gfdd$GDP_2018_log <- log(gfdd$GDP_2018)
+
+
+df <- gfdd %>% 
+  select(credito = GFDD.AI.20, debito = GFDD.AI.21, epag = GFDD.AI.22) %>% 
+  filter(!is.na(debito))
+```
+
+> __Fonte dos dados:__
+>
+> [Banco Mundial - Global Financial Development Data](https://datacatalog.worldbank.org/dataset/global-financial-development)
+>
+> [Banco Mundial - Gross Domestic Product](https://datacatalog.worldbank.org/dataset/gdp)
+
+
+## A famosa regressão linear
+
+
+Nós analisaremos dados do Banco Mundial contendo indicadores nacionais relacionados ao crédito.
+
+Vamos usar os dados para tentar responder se o uso de meios eletrônicos de pagamento pode ser explicado pela presença de cartões de débito. Na verdade, trata-se de uma relação óbvia, já que os meios de pagamento eletrônicos, de modo geral, dependem de cartões para que sejam processados. Então, esperamos encontrar aqui uma relação bastante forte entre as duas variáveis.
+
+* GFDD.AI.20	Credit card (% age 15+)
+* GFDD.AI.21	Debit card (% age 15+)
+* GFDD.AI.22	Electronic payments used to make payments (% age 15+)
+
+1. Há relação entre o uso de meios eletrônicos de pagamento e a presença de cartões de débito e crédito?
+
+2. Quão forte é essa relação?
+
+3. Qual tipo de cartão contribui mais para a popularização do meios eletrônicos de pagamento?
+
+4. Quão acuradamente podemos estimar o efeito de cada cartão sobre o uso de meios eletrônicos de pagamento?
+
+5. Quão acuradamente podemos prever o uso futuro de meios eletrônicos de pagamento?
+
+6. A relação é linear?
+
+7. Existe sinergia entre cartão de débito e crédito?
+
+## Regressão linear simples
+
+A regressão linear simples é um modo de tentar estimar uma resposta quantitativa $y$ com base em uma única outra variável $x$.
+
+$$y \approx \beta_0 + \beta_1x$$
+
+$\beta_0$ e $\beta_1$ são coeficientes do modelo que representam o intercepto e a inclinação. Isto é, o intercepto $\beta_0$ pode ser entendido como uma média geral e a inclinação $\beta_1$ indica quanto o valor de $y$ vai variar com a mudança de $x$ em uma unidade.
+
+Usando o modelo de regressão linear, assim que tivermos ajustado o modelo a nossos dados, será possível estimar o percentual da população com 15 ou mais anos de idade que usa meios eletrônicos conforme um percentual particular de presença de cartão de débito, se calcularmos
+
+$$\hat{y} \approx \hat{\beta}_0 + \hat{\beta}_1$$
+
+Conforme o problema que queremos atacar, vamos definir inicialmente que:
+
+$y =$ % da população com mais de 15 anos que usa meios eletrônicos de pagamento
+
+$x =$ % da população com cartão de débito.
+
+E assim:
+
+$$ePag \approx \beta_0 + \beta_1 \times debito$$
+
+### Estimando os coeficientes
+
+Temos dados de 131 países, contento os percentuais da população com 15 ou mais anos de idade que paga com meios eletrônicos e que possui cartão de débito.
+
+Cada país é representado por uma observação contendo um par medidas, que são um valor de $x$ e um valor de $y$.
+
+$$(x_1, y_1), (x_2, y_2), \ldots, (x_n, y_n)$$
+
+Nosso objetivo é estimar os coeficientes que melhor ajustem o modelo aos dados. Em outras palavras, vamos buscar os parâmetros $\beta_0$ e $\beta_1$ que resultem na reta mais próxima de todos os pontos. Há algumas formas para buscar esse "melhor ajuste". O mais popular deles é o Método dos Mínimos Quadrados - MMQ (Ordinary Least Squares - OLS, em inglês).
+
+O método dos mínimos quadrados funciona assim. Se $\hat{y}_i = \hat{\beta}_0 + \hat{\beta}_1 x_i$ é a predição de $y$ com base no $i$n valor de $x$, temos com identificar então o erro $e_i = y_i - \hat{y}_i$. No gráfico acima, cada linha cinza que conecta a reta de regressão a um ponto (uma observação) representa um erro. Podemos então definir a soma dos erros quadrados (RSS):
+
+$$
+\begin{aligned}
+  RSS & = \sum^{n}_{i=1} e_i ^2 \\
+  RSS & = \sum^{n}_{i=1} (y_i - \hat{y}_i)^2 \\
+  RSS & = \sum^{n}_{i=1} (y_1 - \beta_0 - \beta_1 \times x_1)^2
+\end{aligned}
+$$
+
+O que o modelo faz é buscar a reta que minimiza o RSS, o que é feito assumindo:
+
+$$
+\begin{aligned}
+\beta_1 &= \dfrac{\sum^{n}_{i=1} (x_i - \bar{x})(y_i - \bar{y})}{\sum^{n}_{i=1} (x_i - \bar{x})^2} \\\\
+\beta_0 &= \bar{y} - \beta_1{\bar{x}}
+\end{aligned}
+$$
+
+Onde 
+
+$$
+\begin{aligned}
+\bar{y} &= \dfrac{1}{n} \sum^{n}_{i=1} y_i \\\\
+\bar{x} &= \dfrac{1}{n} \sum^{n}_{i=1} x_i
+\end{aligned}
+$$
+
+```{r, fig.align="center", fig.width=8, echo=FALSE}
+model1 <- lm(epag ~ debito, df)
+aug.model1 <- augment(model1)
+
+ggplot(aug.model1, aes(debito, epag)) +
+  geom_point(color = "red3") +
+  stat_smooth(method = lm, se = FALSE, color = "blue") +
+  geom_segment(aes(xend = debito, yend = .fitted), color = "darkgrey", size = 0.3) +
+  labs(title = "Regressão de ePag por Cartão de Débito",
+       subtitle = "Ajuste dos mínimos quadrados")
+```
+
+Após tudo isso, vamos então parar e olhar para o resultado gerado com a aplicação das equações acima detalhadas:
+
+```{r}
+model_debito <- lm(epag ~ debito, df)
+summary(model_debito)
+```
+
+Veja que se $\hat{epag} \approx \hat{\beta}_0 + \hat{\beta}_1 debito$, então
+
+$$\hat{epag} \approx 8.89 + 0.86 \times debito$$
+
+O modelo estima que para cada percentual a mais de habitantes com cartão de débito, o percentual da população efetuando pagamentos eletrônicos cresce 0.86%, sendo 8.89% o percentual da população com 15 ou mais anos que realizaria pagamentos eletrônicos quando
+0% da população possui cartão de débito.
+
+### Assessando a acurácia dos coeficientes
+
+Criamos um modelo que estima a influência da distribuição de cartão de débito entre a população na popularização dos pagamentos eletrônicos. Este modelo é baseado na reta de regressão presente no gráfico acima, que foi ajustada aos dados por meio do método dos mínimos quadrados ordinários.
+
+Mas como nós sabemos, depois de ajustar o modelo, se os coeficientes estimados são "bons"? O que, em outros termos, é o mesmo que questionar: as nossas predições para $y$ com base nesta reta são próximos da realidade?
+
+Para responder esta pergunta, primeiro é preciso entender o que significa realizar estimações com base em regressão linear.
+
+
+
+
+
+
+A intuição por trás da regressão linear
+
+E como podemos saber se esse modelo é o melhor ajuste para os dados?
+
+É aqui que a regressão linear colabora profundamente. 

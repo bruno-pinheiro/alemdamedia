@@ -1,0 +1,146 @@
+---
+title: Aquele tutorial maroto para você entender regressão linear de uma vez por todas
+author: Bruno Pinheiro
+date: '2020-02-08'
+slug: aquele-tutorial-maroto-para-você-entender-regressão-linear-de-uma-vez-por-todas
+categories:
+  - Tutoriais
+tags:
+  - estatístitica
+  - regressão
+  - modelos lineares
+type: 'post'
+subtitle: ''
+image: ''
+---
+
+
+
+<p>Se como eu você vem de um background de humanas, sei bem, algumas coisas em estatística podem parecer apavorantes num primeiro momento. Mas acredite, se levar primeiro para o lado da intuição e só depois para o da matemática, vai ficar mais fácil entender os fundamentos estatísticos e matemáticos.</p>
+<p>A regressão linear é uma das técnicas mais tradicionais de aprendizagem estatística e, no mundo da aprendizagem de máquina, desempenha papel importante em uma grande variedade de aplicações. É um tipo de modelo dos básicos, que qualquer pessoa querendo atuar com ciência de dados precisa dominar.</p>
+<p>Com este post, você terá um background mínimo para utilizar esta importante técnica para realizar algumas análises, avaliar a qualidade do seu modelo, realizar inferências e, também, utilizar a regressão linear como um modelo preditivo.</p>
+<div id="preparar-o-ambiente" class="section level2">
+<h2>Preparar o ambiente</h2>
+<div id="pacotes" class="section level3">
+<h3>Pacotes</h3>
+<pre class="r"><code>library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(broom)
+
+theme_set(theme_classic())</code></pre>
+</div>
+<div id="dados" class="section level3">
+<h3>Dados</h3>
+<pre class="r"><code>gfdd &lt;- read.csv(&quot;data/GFDDData_clean.csv&quot;)
+indicadores &lt;- read.csv(&quot;data/GFDD_lista_indicadores.csv&quot;, stringsAsFactors = FALSE)
+
+gfdd$GDP_2018_log &lt;- log(gfdd$GDP_2018)
+
+
+df &lt;- gfdd %&gt;% 
+  select(credito = GFDD.AI.20, debito = GFDD.AI.21, epag = GFDD.AI.22) %&gt;% 
+  filter(!is.na(debito))</code></pre>
+<blockquote>
+<p><strong>Fonte dos dados:</strong></p>
+<p><a href="https://datacatalog.worldbank.org/dataset/global-financial-development">Banco Mundial - Global Financial Development Data</a></p>
+<p><a href="https://datacatalog.worldbank.org/dataset/gdp">Banco Mundial - Gross Domestic Product</a></p>
+</blockquote>
+</div>
+</div>
+<div id="a-famosa-regressão-linear" class="section level2">
+<h2>A famosa regressão linear</h2>
+<p>Nós analisaremos dados do Banco Mundial contendo indicadores nacionais relacionados ao crédito.</p>
+<p>Vamos usar os dados para tentar responder se o uso de meios eletrônicos de pagamento pode ser explicado pela presença de cartões de débito. Na verdade, trata-se de uma relação óbvia, já que os meios de pagamento eletrônicos, de modo geral, dependem de cartões para que sejam processados. Então, esperamos encontrar aqui uma relação bastante forte entre as duas variáveis.</p>
+<ul>
+<li>GFDD.AI.20 Credit card (% age 15+)</li>
+<li>GFDD.AI.21 Debit card (% age 15+)</li>
+<li>GFDD.AI.22 Electronic payments used to make payments (% age 15+)</li>
+</ul>
+<ol style="list-style-type: decimal">
+<li><p>Há relação entre o uso de meios eletrônicos de pagamento e a presença de cartões de débito e crédito?</p></li>
+<li><p>Quão forte é essa relação?</p></li>
+<li><p>Qual tipo de cartão contribui mais para a popularização do meios eletrônicos de pagamento?</p></li>
+<li><p>Quão acuradamente podemos estimar o efeito de cada cartão sobre o uso de meios eletrônicos de pagamento?</p></li>
+<li><p>Quão acuradamente podemos prever o uso futuro de meios eletrônicos de pagamento?</p></li>
+<li><p>A relação é linear?</p></li>
+<li><p>Existe sinergia entre cartão de débito e crédito?</p></li>
+</ol>
+</div>
+<div id="regressão-linear-simples" class="section level2">
+<h2>Regressão linear simples</h2>
+<p>A regressão linear simples é um modo de tentar estimar uma resposta quantitativa <span class="math inline">\(y\)</span> com base em uma única outra variável <span class="math inline">\(x\)</span>.</p>
+<p><span class="math display">\[y \approx \beta_0 + \beta_1x\]</span></p>
+<p><span class="math inline">\(\beta_0\)</span> e <span class="math inline">\(\beta_1\)</span> são coeficientes do modelo que representam o intercepto e a inclinação. Isto é, o intercepto <span class="math inline">\(\beta_0\)</span> pode ser entendido como uma média geral e a inclinação <span class="math inline">\(\beta_1\)</span> indica quanto o valor de <span class="math inline">\(y\)</span> vai variar com a mudança de <span class="math inline">\(x\)</span> em uma unidade.</p>
+<p>Usando o modelo de regressão linear, assim que tivermos ajustado o modelo a nossos dados, será possível estimar o percentual da população com 15 ou mais anos de idade que usa meios eletrônicos conforme um percentual particular de presença de cartão de débito, se calcularmos</p>
+<p><span class="math display">\[\hat{y} \approx \hat{\beta}_0 + \hat{\beta}_1\]</span></p>
+<p>Conforme o problema que queremos atacar, vamos definir inicialmente que:</p>
+<p><span class="math inline">\(y =\)</span> % da população com mais de 15 anos que usa meios eletrônicos de pagamento</p>
+<p><span class="math inline">\(x =\)</span> % da população com cartão de débito.</p>
+<p>E assim:</p>
+<p><span class="math display">\[ePag \approx \beta_0 + \beta_1 \times debito\]</span></p>
+<div id="estimando-os-coeficientes" class="section level3">
+<h3>Estimando os coeficientes</h3>
+<p>Temos dados de 131 países, contento os percentuais da população com 15 ou mais anos de idade que paga com meios eletrônicos e que possui cartão de débito.</p>
+<p>Cada país é representado por uma observação contendo um par medidas, que são um valor de <span class="math inline">\(x\)</span> e um valor de <span class="math inline">\(y\)</span>.</p>
+<p><span class="math display">\[(x_1, y_1), (x_2, y_2), \ldots, (x_n, y_n)\]</span></p>
+<p>Nosso objetivo é estimar os coeficientes que melhor ajustem o modelo aos dados. Em outras palavras, vamos buscar os parâmetros <span class="math inline">\(\beta_0\)</span> e <span class="math inline">\(\beta_1\)</span> que resultem na reta mais próxima de todos os pontos. Há algumas formas para buscar esse “melhor ajuste”. O mais popular deles é o Método dos Mínimos Quadrados - MMQ (Ordinary Least Squares - OLS, em inglês).</p>
+<p>O método dos mínimos quadrados funciona assim. Se <span class="math inline">\(\hat{y}_i = \hat{\beta}_0 + \hat{\beta}_1 x_i\)</span> é a predição de <span class="math inline">\(y\)</span> com base no <span class="math inline">\(i\)</span>n valor de <span class="math inline">\(x\)</span>, temos com identificar então o erro <span class="math inline">\(e_i = y_i - \hat{y}_i\)</span>. No gráfico acima, cada linha cinza que conecta a reta de regressão a um ponto (uma observação) representa um erro. Podemos então definir a soma dos erros quadrados (RSS):</p>
+<p><span class="math display">\[
+\begin{aligned}
+  RSS &amp; = \sum^{n}_{i=1} e_i ^2 \\
+  RSS &amp; = \sum^{n}_{i=1} (y_i - \hat{y}_i)^2 \\
+  RSS &amp; = \sum^{n}_{i=1} (y_1 - \beta_0 - \beta_1 \times x_1)^2
+\end{aligned}
+\]</span></p>
+<p>O que o modelo faz é buscar a reta que minimiza o RSS, o que é feito assumindo:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\beta_1 &amp;= \dfrac{\sum^{n}_{i=1} (x_i - \bar{x})(y_i - \bar{y})}{\sum^{n}_{i=1} (x_i - \bar{x})^2} \\\\
+\beta_0 &amp;= \bar{y} - \beta_1{\bar{x}}
+\end{aligned}
+\]</span></p>
+<p>Onde</p>
+<p><span class="math display">\[
+\begin{aligned}
+\bar{y} &amp;= \dfrac{1}{n} \sum^{n}_{i=1} y_i \\\\
+\bar{x} &amp;= \dfrac{1}{n} \sum^{n}_{i=1} x_i
+\end{aligned}
+\]</span></p>
+<p><img src="/post/2020-02-08-aquele-tutorial-maroto-para-voc%C3%AA-entender-regress%C3%A3o-linear-de-uma-vez-por-todas.br_files/figure-html/unnamed-chunk-3-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p>Após tudo isso, vamos então parar e olhar para o resultado gerado com a aplicação das equações acima detalhadas:</p>
+<pre class="r"><code>model_debito &lt;- lm(epag ~ debito, df)
+summary(model_debito)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = epag ~ debito, data = df)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -27.219  -8.192   0.199   6.276  50.492 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  8.88576    1.86122   4.774 4.82e-06 ***
+## debito       0.85895    0.03343  25.693  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 11.89 on 129 degrees of freedom
+## Multiple R-squared:  0.8365, Adjusted R-squared:  0.8353 
+## F-statistic: 660.1 on 1 and 129 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>Veja que se <span class="math inline">\(\hat{epag} \approx \hat{\beta}_0 + \hat{\beta}_1 debito\)</span>, então</p>
+<p><span class="math display">\[\hat{epag} \approx 8.89 + 0.86 \times debito\]</span></p>
+<p>O modelo estima que para cada percentual a mais de habitantes com cartão de débito, o percentual da população efetuando pagamentos eletrônicos cresce 0.86%, sendo 8.89% o percentual da população com 15 ou mais anos que realizaria pagamentos eletrônicos quando
+0% da população possui cartão de débito.</p>
+</div>
+<div id="assessando-a-acurácia-dos-coeficientes" class="section level3">
+<h3>Assessando a acurácia dos coeficientes</h3>
+<p>Criamos um modelo que estima a influência da distribuição de cartão de débito entre a população na popularização dos pagamentos eletrônicos. Este modelo é baseado na reta de regressão presente no gráfico acima, que foi ajustada aos dados por meio do método dos mínimos quadrados ordinários.</p>
+<p>Mas como nós sabemos, depois de ajustar o modelo, se os coeficientes estimados são “bons”? O que, em outros termos, é o mesmo que questionar: as nossas predições para <span class="math inline">\(y\)</span> com base nesta reta são próximos da realidade?</p>
+<p>Para responder esta pergunta, primeiro é preciso entender o que significa realizar estimações com base em regressão linear.</p>
+<p>A intuição por trás da regressão linear</p>
+<p>E como podemos saber se esse modelo é o melhor ajuste para os dados?</p>
+<p>É aqui que a regressão linear colabora profundamente.</p>
+</div>
+</div>
